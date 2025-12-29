@@ -7,7 +7,7 @@ export const Route = createFileRoute("/dashboard")({
 })
 
 function Dashboard() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, logout } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function Dashboard() {
         </div>
 
         <button
-          onClick={() => window.location.assign("/bff/logout")}
+          onClick={() => logout()}
           className="mt-8 text-muted-foreground hover:text-foreground transition-colors"
         >
           Sign out

@@ -32,6 +32,7 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const { login } = useAuth();
   return (
     <AuthRedirect>
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
@@ -74,7 +75,7 @@ function App() {
 
         {/* Secondary link */}
         <button
-          onClick={() => window.location.href = "/bff/login"}
+          onClick={() => login()}
           className="block mt-4 text-gray-600 hover:text-gray-900 transition-colors animate-fade-in animation-delay-700 mx-auto"
         >
           Already have an account?{" "}
