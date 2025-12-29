@@ -6,7 +6,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { getAntiforgeryTokenFn, getCurrentUserFn } from "../server/auth";
+import { getCurrentUserFn } from "../server/auth";
 import { type ParsedUser, parseUser, type User } from "../types/auth";
 
 interface AuthContextType {
@@ -14,6 +14,7 @@ interface AuthContextType {
 	rawUser: User | null;
 	isAuthenticated: boolean;
 	isLoading: boolean;
+	csrfToken: string;
 	login: () => void;
 	logout: () => Promise<void>;
 	refetchUser: () => Promise<void>;
@@ -24,12 +25,15 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({
 	children,
 	initialUser,
+	csrfToken,
 }: {
 	children: React.ReactNode;
 	initialUser?: User | null;
+	csrfToken?: string;
 }) {
 	const [rawUser, setRawUser] = useState<User | null>(initialUser || null);
 	const [isLoading, setIsLoading] = useState(!initialUser);
+	const antiForgeryToken = csrfToken ?? "";
 
 	const user = rawUser ? parseUser(rawUser) : null;
 	const isAuthenticated = rawUser?.isAuthenticated || false;
@@ -53,11 +57,10 @@ export function AuthProvider({
 
 	const logout = useCallback(async () => {
 		try {
-			const csrfData = await getAntiforgeryTokenFn();
 			await fetch("/bff/logout", {
 				method: "POST",
 				headers: {
-					"X-CSRF-TOKEN": csrfData.requestToken,
+					"X-CSRF-TOKEN": antiForgeryToken,
 				},
 			});
 		} catch (error) {
@@ -65,7 +68,7 @@ export function AuthProvider({
 		}
 		setRawUser(null);
 		window.location.href = "/";
-	}, []);
+	}, [antiForgeryToken]);
 
 	// Initial client-side fetch if no initial user
 	useEffect(() => {
@@ -79,6 +82,7 @@ export function AuthProvider({
 		rawUser,
 		isAuthenticated,
 		isLoading,
+		csrfToken: antiForgeryToken,
 		login,
 		logout,
 		refetchUser,
