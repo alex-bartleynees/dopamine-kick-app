@@ -1,7 +1,7 @@
 // src/auth/AuthProvider.tsx
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, ParsedUser, parseUser } from '../types/auth'
-import { useCsrf } from '../hooks/useCsrf'
+import { getCurrentUserFn, logoutFn } from '../server/auth'
 import React from 'react'
 
 interface AuthContextType {
@@ -22,7 +22,6 @@ export function AuthProvider({ children, initialUser }: {
 }) {
   const [rawUser, setRawUser] = useState<User | null>(initialUser || null)
   const [isLoading, setIsLoading] = useState(!initialUser)
-  const { fetchCsrfToken, getToken, clearToken } = useCsrf()
 
   const user = rawUser ? parseUser(rawUser) : null
   const isAuthenticated = rawUser?.isAuthenticated || false
@@ -30,46 +29,31 @@ export function AuthProvider({ children, initialUser }: {
   const refetchUser = React.useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/bff/user', {
-        credentials: 'include',
-      })
-
-      if (response.ok) {
-        const userData = await response.json()
-        setRawUser(userData)
-        // Fetch CSRF token when user is authenticated
-        if (userData?.isAuthenticated) {
-          await fetchCsrfToken()
-        }
-      } else {
-        setRawUser(null)
-      }
+      const userData = await getCurrentUserFn()
+      setRawUser(userData)
     } catch (error) {
       console.error('Failed to fetch user:', error)
       setRawUser(null)
     } finally {
       setIsLoading(false)
     }
-  }, [fetchCsrfToken])
+  }, [])
 
   const login = React.useCallback(() => {
     window.location.href = '/bff/login'
   }, [])
 
   const logout = React.useCallback(async () => {
-    const csrfToken = getToken()
-
-    await fetch('/bff/logout', {
-      method: 'POST',
-      credentials: 'include',
-      redirect: 'manual',
-      headers: csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {},
-    })
-
-    clearToken()
+    try {
+      await logoutFn()
+    } catch (error) {
+      // Redirect throws a Response, so only log actual errors
+      if (!(error instanceof Response)) {
+        console.error('Logout failed:', error)
+      }
+    }
     setRawUser(null)
-    window.location.href = '/'
-  }, [getToken, clearToken])
+  }, [])
 
   // Initial client-side fetch if no initial user
   useEffect(() => {
