@@ -12,10 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SignoutCallbackOidcRouteImport } from './routes/signout-callback-oidc'
 import { Route as SigninOidcRouteImport } from './routes/signin-oidc'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BffSplatRouteImport } from './routes/bff/$'
-import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -32,9 +32,8 @@ const SigninOidcRoute = SigninOidcRouteImport.update({
   path: '/signin-oidc',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -47,77 +46,72 @@ const BffSplatRoute = BffSplatRouteImport.update({
   path: '/bff/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
-  getParentRoute: () => rootRouteImport,
+const AuthDashboardRoute = AuthDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
-  '/api/$': typeof ApiSplatRoute
+  '/dashboard': typeof AuthDashboardRoute
   '/bff/$': typeof BffSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
-  '/api/$': typeof ApiSplatRoute
+  '/dashboard': typeof AuthDashboardRoute
   '/bff/$': typeof BffSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/_auth': typeof AuthRouteWithChildren
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
-  '/api/$': typeof ApiSplatRoute
+  '/_auth/dashboard': typeof AuthDashboardRoute
   '/bff/$': typeof BffSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
-    | '/api/$'
+    | '/dashboard'
     | '/bff/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
-    | '/api/$'
+    | '/dashboard'
     | '/bff/$'
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
+    | '/_auth'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
-    | '/api/$'
+    | '/_auth/dashboard'
     | '/bff/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  AuthRoute: typeof AuthRouteWithChildren
   SigninOidcRoute: typeof SigninOidcRoute
   SignoutCallbackOidcRoute: typeof SignoutCallbackOidcRoute
   SignupRoute: typeof SignupRoute
-  ApiSplatRoute: typeof ApiSplatRoute
   BffSplatRoute: typeof BffSplatRoute
 }
 
@@ -144,11 +138,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninOidcRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -165,23 +159,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BffSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_auth/dashboard': {
+      id: '/_auth/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthDashboardRouteImport
+      parentRoute: typeof AuthRoute
     }
   }
 }
 
+interface AuthRouteChildren {
+  AuthDashboardRoute: typeof AuthDashboardRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthDashboardRoute: AuthDashboardRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  AuthRoute: AuthRouteWithChildren,
   SigninOidcRoute: SigninOidcRoute,
   SignoutCallbackOidcRoute: SignoutCallbackOidcRoute,
   SignupRoute: SignupRoute,
-  ApiSplatRoute: ApiSplatRoute,
   BffSplatRoute: BffSplatRoute,
 }
 export const routeTree = rootRouteImport
