@@ -13,7 +13,13 @@ export function getProxyHeaders(request: Request): Record<string, string> {
 
 	for (const [key, value] of request.headers.entries()) {
 		if (
-			!["host", "connection", "transfer-encoding"].includes(key.toLowerCase())
+			![
+				"host",
+				"connection",
+				"transfer-encoding",
+				"content-length",
+				"content-type",
+			].includes(key.toLowerCase())
 		) {
 			headers[key] = value;
 		}
@@ -22,6 +28,10 @@ export function getProxyHeaders(request: Request): Record<string, string> {
 	headers.host = new URL(BACKEND_URL).host;
 	headers["x-forwarded-host"] = request.headers.get("host") || "";
 	headers["x-forwarded-proto"] = new URL(request.url).protocol.slice(0, -1);
+	headers["x-forwarded-for"] =
+		request.headers.get("x-forwarded-for") ||
+		request.headers.get("x-real-ip") ||
+		"";
 
 	return headers;
 }

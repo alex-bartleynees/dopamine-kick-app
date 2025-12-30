@@ -1,15 +1,17 @@
 import { useForm } from "@tanstack/react-form";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Eye, EyeOff, Flame } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createUserFn } from "@/server/users";
 
 export const Route = createFileRoute("/signup")({ component: SignUp });
 
 function SignUp() {
-	const navigate = useNavigate();
 	const [showPassword, setShowPassword] = useState(false);
+	const [emailError, setEmailError] = useState<string | null>(null);
+	const [formError, setFormError] = useState<string | null>(null);
 
 	const form = useForm({
 		defaultValues: {
@@ -19,8 +21,26 @@ function SignUp() {
 			confirmPassword: "",
 		},
 		onSubmit: async ({ value }) => {
-			console.log("Form submitted:", value);
-			navigate({ to: "/choose-habits" });
+			setEmailError(null);
+			setFormError(null);
+			try {
+				await createUserFn({
+					data: {
+						email: value.email,
+						username: value.email,
+						name: value.name,
+						password: value.password,
+						image: "",
+					},
+				});
+				window.location.href = "/bff/login";
+			} catch (error) {
+				if (error instanceof Error && error.message.includes("EMAIL_EXISTS")) {
+					setEmailError("A user with this email already exists");
+				} else {
+					setFormError("Failed to create account. Please try again.");
+				}
+			}
 		},
 	});
 
@@ -90,9 +110,15 @@ function SignUp() {
 									placeholder="you@example.com"
 									value={field.state.value}
 									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
+									onChange={(e) => {
+										setEmailError(null);
+										field.handleChange(e.target.value);
+									}}
 									required
 								/>
+								{emailError && (
+									<p className="text-sm text-destructive mt-1">{emailError}</p>
+								)}
 							</div>
 						)}
 					</form.Field>
@@ -198,6 +224,10 @@ function SignUp() {
 							</div>
 						)}
 					</form.Field>
+
+					{formError && (
+						<p className="text-sm text-destructive text-center">{formError}</p>
+					)}
 
 					<div className="pt-4 animate-fade-in-up animation-delay-700">
 						<Button

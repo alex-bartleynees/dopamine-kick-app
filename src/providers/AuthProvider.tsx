@@ -1,5 +1,6 @@
 import type React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
+import { setCsrfToken } from "../lib/csrf-store";
 import { getCurrentUserFn, logoutFn } from "../server/auth";
 import { type ParsedUser, parseUser, type User } from "../types/auth";
 
@@ -28,6 +29,11 @@ export function AuthProvider({
 	const [rawUser, setRawUser] = useState<User | null>(initialUser || null);
 	const [isLoading, setIsLoading] = useState(!initialUser);
 	const antiForgeryToken = csrfToken ?? "";
+
+	// Set the CSRF token in the store for middleware access
+	if (csrfToken) {
+		setCsrfToken(csrfToken);
+	}
 
 	const user = rawUser ? parseUser(rawUser) : null;
 	const isAuthenticated = rawUser?.isAuthenticated || false;
