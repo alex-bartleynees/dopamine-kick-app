@@ -1,4 +1,12 @@
+import { setResponseHeader } from "@tanstack/react-start/server";
+
 export const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5224";
+
+export function forwardResponseCookies(response: Response): void {
+	for (const cookie of response.headers.getSetCookie()) {
+		setResponseHeader("Set-Cookie", cookie);
+	}
+}
 
 export function getProxyHeaders(request: Request): Record<string, string> {
 	const headers: Record<string, string> = {};

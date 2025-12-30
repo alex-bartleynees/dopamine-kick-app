@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BffSplatRouteImport } from './routes/bff/$'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
+import { Route as AuthChooseHabitsRouteImport } from './routes/_auth.choose-habits'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -51,12 +52,18 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthChooseHabitsRoute = AuthChooseHabitsRouteImport.update({
+  id: '/choose-habits',
+  path: '/choose-habits',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
+  '/choose-habits': typeof AuthChooseHabitsRoute
   '/dashboard': typeof AuthDashboardRoute
   '/bff/$': typeof BffSplatRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
+  '/choose-habits': typeof AuthChooseHabitsRoute
   '/dashboard': typeof AuthDashboardRoute
   '/bff/$': typeof BffSplatRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
+  '/_auth/choose-habits': typeof AuthChooseHabitsRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/bff/$': typeof BffSplatRoute
 }
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
+    | '/choose-habits'
     | '/dashboard'
     | '/bff/$'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
+    | '/choose-habits'
     | '/dashboard'
     | '/bff/$'
   id:
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
+    | '/_auth/choose-habits'
     | '/_auth/dashboard'
     | '/bff/$'
   fileRoutesById: FileRoutesById
@@ -166,14 +178,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/choose-habits': {
+      id: '/_auth/choose-habits'
+      path: '/choose-habits'
+      fullPath: '/choose-habits'
+      preLoaderRoute: typeof AuthChooseHabitsRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
 interface AuthRouteChildren {
+  AuthChooseHabitsRoute: typeof AuthChooseHabitsRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthChooseHabitsRoute: AuthChooseHabitsRoute,
   AuthDashboardRoute: AuthDashboardRoute,
 }
 

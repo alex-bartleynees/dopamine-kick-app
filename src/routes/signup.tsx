@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Flame } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

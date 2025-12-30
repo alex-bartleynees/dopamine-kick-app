@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { BACKEND_URL, getProxyHeaders } from "../lib/proxy-utils";
+import {
+	BACKEND_URL,
+	forwardResponseCookies,
+	getProxyHeaders,
+} from "../lib/proxy-utils";
 import type { User } from "../types/auth";
 
 interface AntiforgeryResponse {
@@ -35,9 +39,31 @@ export const getAntiforgeryTokenFn = createServerFn({ method: "GET" }).handler(
 		});
 
 		if (response.ok) {
+			forwardResponseCookies(response);
 			return (await response.json()) as AntiforgeryResponse;
 		}
 
 		throw new Error("Failed to fetch antiforgery token");
 	},
 );
+
+export const logoutFn = createServerFn({ method: "POST" })
+	.inputValidator((d: string) => d)
+	.handler(async ({ data: csrfToken }): Promise<void> => {
+		const request = getRequest();
+
+		const response = await fetch(`${BACKEND_URL}/bff/logout`, {
+			method: "POST",
+			headers: {
+				...getProxyHeaders(request),
+				"X-CSRF-TOKEN": csrfToken,
+			},
+		});
+
+		if (response.ok) {
+			forwardResponseCookies(response);
+			return;
+		}
+
+		throw new Error("Failed to logout");
+	});

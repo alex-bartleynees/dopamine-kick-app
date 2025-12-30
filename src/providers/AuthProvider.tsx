@@ -1,12 +1,6 @@
 import type React from "react";
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
-import { getCurrentUserFn } from "../server/auth";
+import { createContext, useCallback, useEffect, useState } from "react";
+import { getCurrentUserFn, logoutFn } from "../server/auth";
 import { type ParsedUser, parseUser, type User } from "../types/auth";
 
 interface AuthContextType {
@@ -20,7 +14,7 @@ interface AuthContextType {
 	refetchUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({
 	children,
@@ -57,12 +51,7 @@ export function AuthProvider({
 
 	const logout = useCallback(async () => {
 		try {
-			await fetch("/bff/logout", {
-				method: "POST",
-				headers: {
-					"X-CSRF-TOKEN": antiForgeryToken,
-				},
-			});
+			await logoutFn({ data: antiForgeryToken });
 		} catch (error) {
 			console.error("Logout failed:", error);
 		}
@@ -89,12 +78,4 @@ export function AuthProvider({
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-	const context = useContext(AuthContext);
-	if (!context) {
-		throw new Error("useAuth must be used within an AuthProvider");
-	}
-	return context;
 }
