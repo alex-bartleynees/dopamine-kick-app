@@ -9,7 +9,7 @@ function Dashboard() {
 	const { logout } = useAuth();
 
 	return (
-		<div className="min-h-screen bg-background p-6">
+		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 p-6">
 			<div className="max-w-4xl mx-auto">
 				<h1 className="text-3xl font-bold mb-2">Dashboard</h1>
 				<p className="text-muted-foreground mb-8">

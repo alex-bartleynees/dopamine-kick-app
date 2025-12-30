@@ -5,6 +5,7 @@
   --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
   --animate-scale-in: scale-in 0.8s ease-out forwards;
   --animate-wiggle: wiggle 2s ease-in-out infinite;
+  --animate-pop-in: pop-in 0.4s ease-out forwards;
 }
 
 @keyframes fade-in {
@@ -28,6 +29,12 @@
   75% { transform: rotate(-10deg); }
 }
 
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.5); }
+  70% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
 /* Animation delays */
 .animation-delay-200 { animation-delay: 200ms; }
 .animation-delay-400 { animation-delay: 400ms; }
@@ -38,6 +45,7 @@
 /* Start invisible before animation plays */
 .animate-fade-in,
 .animate-fade-in-up,
-.animate-scale-in {
+.animate-scale-in,
+.animate-pop-in {
   opacity: 0;
 }

@@ -137,13 +137,13 @@ export function ChooseHabitsScreen() {
 	const canContinue = selectedIds.size >= 3;
 
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
+		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
 			<div className="max-w-4xl w-full">
 				<div className="animate-fade-in-up">
 					{/* Header */}
 					<div className="text-center mb-8">
 						<h1 className="mb-3">What habits do you want to build?</h1>
-						<p className="text-gray-600">
+						<p className="text-gray-600 dark:text-gray-300">
 							Pick 3-5 to start. You can add more later.
 						</p>
 					</div>
@@ -158,10 +158,10 @@ export function ChooseHabitsScreen() {
 									key={habit.id}
 									onClick={() => toggleHabit(habit.id)}
 									style={{ animationDelay: `${index * 50}ms` }}
-									className={`relative bg-white rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
+									className={`relative bg-white dark:bg-gray-800 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
 										isSelected
-											? "border-2 border-purple-500 shadow-lg shadow-purple-200"
-											: "border-2 border-gray-100 shadow hover:shadow-md"
+											? "border-2 border-purple-500 shadow-lg shadow-purple-200 dark:shadow-purple-900/50"
+											: "border-2 border-gray-100 dark:border-gray-700 shadow hover:shadow-md"
 									}`}
 								>
 									{isSelected && (
@@ -171,7 +171,7 @@ export function ChooseHabitsScreen() {
 									)}
 									<div className="text-5xl mb-3">{habit.emoji}</div>
 									<div className="font-medium mb-1">{habit.name}</div>
-									<div className="text-sm text-gray-500">{habit.target}</div>
+									<div className="text-sm text-gray-500 dark:text-gray-400">{habit.target}</div>
 								</button>
 							);
 						})}
@@ -181,13 +181,13 @@ export function ChooseHabitsScreen() {
 							type="button"
 							onClick={() => setShowCustomForm(true)}
 							style={{ animationDelay: `${allHabits.length * 50}ms` }}
-							className="bg-white rounded-2xl p-6 text-center border-2 border-dashed border-gray-300 hover:border-purple-400 transition-all duration-300 hover:scale-105 animate-scale-in"
+							className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-400 transition-all duration-300 hover:scale-105 animate-scale-in"
 						>
 							<div className="text-5xl mb-3">
 								<Plus className="w-12 h-12 mx-auto text-gray-400" />
 							</div>
-							<div className="font-medium text-gray-700 mb-1">Custom Habit</div>
-							<div className="text-sm text-gray-500">Add your own</div>
+							<div className="font-medium text-gray-700 dark:text-gray-200 mb-1">Custom Habit</div>
+							<div className="text-sm text-gray-500 dark:text-gray-400">Add your own</div>
 						</button>
 					</div>
 
@@ -199,7 +199,7 @@ export function ChooseHabitsScreen() {
 						className={`w-full py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 animate-fade-in-up animation-delay-300 ${
 							canContinue
 								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
-								: "bg-gray-200 text-gray-400 cursor-not-allowed"
+								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 						}`}
 					>
 						Continue ({selectedIds.size} selected)
@@ -224,7 +224,7 @@ export function ChooseHabitsScreen() {
 					/>
 					<div
 						role="document"
-						className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-modal-pop"
+						className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-modal-pop"
 					>
 						<h2 id="custom-habit-modal-title" className="mb-6">
 							Create Custom Habit
@@ -234,7 +234,7 @@ export function ChooseHabitsScreen() {
 							<div>
 								<label
 									htmlFor="custom-habit-emoji"
-									className="block text-sm mb-2 text-gray-700"
+									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
 								>
 									Emoji
 								</label>
@@ -244,14 +244,14 @@ export function ChooseHabitsScreen() {
 									value={customEmoji}
 									onChange={(e) => setCustomEmoji(e.target.value)}
 									maxLength={2}
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all text-center text-3xl"
+									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all text-center text-3xl"
 								/>
 							</div>
 
 							<div>
 								<label
 									htmlFor="custom-habit-name"
-									className="block text-sm mb-2 text-gray-700"
+									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
 								>
 									Habit Name
 								</label>
@@ -261,14 +261,14 @@ export function ChooseHabitsScreen() {
 									value={customName}
 									onChange={(e) => setCustomName(e.target.value)}
 									placeholder="e.g., Learn Spanish"
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all"
 								/>
 							</div>
 
 							<div>
 								<label
 									htmlFor="custom-habit-target"
-									className="block text-sm mb-2 text-gray-700"
+									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
 								>
 									Target
 								</label>
@@ -278,7 +278,7 @@ export function ChooseHabitsScreen() {
 									value={customTarget}
 									onChange={(e) => setCustomTarget(e.target.value)}
 									placeholder="e.g., 15 min"
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all"
 								/>
 							</div>
 
@@ -286,7 +286,7 @@ export function ChooseHabitsScreen() {
 								<button
 									type="button"
 									onClick={closeModal}
-									className="flex-1 py-3 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all"
+									className="flex-1 py-3 px-6 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
 								>
 									Cancel
 								</button>
@@ -297,7 +297,7 @@ export function ChooseHabitsScreen() {
 									className={`flex-1 py-3 px-6 rounded-xl transition-all ${
 										customName && customTarget
 											? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg"
-											: "bg-gray-200 text-gray-400 cursor-not-allowed"
+											: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 									}`}
 								>
 									Add Habit

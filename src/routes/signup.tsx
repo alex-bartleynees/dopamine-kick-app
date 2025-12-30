@@ -45,7 +45,7 @@ function SignUp() {
 	});
 
 	return (
-		<div className="min-h-screen flex flex-col bg-background px-6 py-12">
+		<div className="min-h-screen flex flex-col bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 px-6 py-12">
 			{/* Logo */}
 			<div className="flex items-center justify-center gap-2 mb-12 animate-fade-in">
 				<div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">

@@ -7,6 +7,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { getAuthenticatedStateFn } from "@/server/auth";
 import type { UserState } from "@/types/user";
@@ -60,6 +61,7 @@ function RootComponent() {
 function AuthenticatedOutlet() {
 	return (
 		<main id="app">
+			<ThemeToggle />
 			<Outlet />
 		</main>
 	);
