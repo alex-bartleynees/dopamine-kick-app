@@ -14,7 +14,7 @@ import { Route as SignoutCallbackOidcRouteImport } from './routes/signout-callba
 import { Route as SigninOidcRouteImport } from './routes/signin-oidc'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BffSplatRouteImport } from './routes/bff/$'
+import { Route as BffLoginRouteImport } from './routes/bff/login'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthChooseHabitsRouteImport } from './routes/_auth.choose-habits'
 
@@ -42,9 +42,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BffSplatRoute = BffSplatRouteImport.update({
-  id: '/bff/$',
-  path: '/bff/$',
+const BffLoginRoute = BffLoginRouteImport.update({
+  id: '/bff/login',
+  path: '/bff/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
@@ -65,7 +65,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/bff/$': typeof BffSplatRoute
+  '/bff/login': typeof BffLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -74,7 +74,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/bff/$': typeof BffSplatRoute
+  '/bff/login': typeof BffLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,7 +85,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_auth/choose-habits': typeof AuthChooseHabitsRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
-  '/bff/$': typeof BffSplatRoute
+  '/bff/login': typeof BffLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,7 +96,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/choose-habits'
     | '/dashboard'
-    | '/bff/$'
+    | '/bff/login'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -105,7 +105,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/choose-habits'
     | '/dashboard'
-    | '/bff/$'
+    | '/bff/login'
   id:
     | '__root__'
     | '/'
@@ -115,7 +115,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_auth/choose-habits'
     | '/_auth/dashboard'
-    | '/bff/$'
+    | '/bff/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -124,7 +124,7 @@ export interface RootRouteChildren {
   SigninOidcRoute: typeof SigninOidcRoute
   SignoutCallbackOidcRoute: typeof SignoutCallbackOidcRoute
   SignupRoute: typeof SignupRoute
-  BffSplatRoute: typeof BffSplatRoute
+  BffLoginRoute: typeof BffLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,11 +164,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/bff/$': {
-      id: '/bff/$'
-      path: '/bff/$'
-      fullPath: '/bff/$'
-      preLoaderRoute: typeof BffSplatRouteImport
+    '/bff/login': {
+      id: '/bff/login'
+      path: '/bff/login'
+      fullPath: '/bff/login'
+      preLoaderRoute: typeof BffLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/dashboard': {
@@ -206,7 +206,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninOidcRoute: SigninOidcRoute,
   SignoutCallbackOidcRoute: SignoutCallbackOidcRoute,
   SignupRoute: SignupRoute,
-  BffSplatRoute: BffSplatRoute,
+  BffLoginRoute: BffLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

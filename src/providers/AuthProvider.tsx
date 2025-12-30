@@ -1,13 +1,11 @@
 import type React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
+import type { UserState } from "@/types/user";
 import { setCsrfToken } from "../lib/csrf-store";
-import { getCurrentUserFn, logoutFn } from "../server/auth";
-import { type ParsedUser, parseUser, type User } from "../types/auth";
+import { getAuthenticatedStateFn, logoutFn } from "../server/auth";
 
 interface AuthContextType {
-	user: ParsedUser | null;
-	rawUser: User | null;
-	isAuthenticated: boolean;
+	user: UserState | null;
 	isLoading: boolean;
 	csrfToken: string;
 	login: () => void;
@@ -19,33 +17,31 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({
 	children,
-	initialUser,
+	userState,
 	csrfToken,
 }: {
 	children: React.ReactNode;
-	initialUser?: User | null;
+	userState?: UserState | null;
 	csrfToken?: string;
 }) {
-	const [rawUser, setRawUser] = useState<User | null>(initialUser || null);
-	const [isLoading, setIsLoading] = useState(!initialUser);
+	const [user, setUser] = useState<UserState | null>(userState || null);
+	const [isLoading, setIsLoading] = useState(!userState);
 	const antiForgeryToken = csrfToken ?? "";
-
-	// Set the CSRF token in the store for middleware access
-	if (csrfToken) {
-		setCsrfToken(csrfToken);
-	}
-
-	const user = rawUser ? parseUser(rawUser) : null;
-	const isAuthenticated = rawUser?.isAuthenticated || false;
 
 	const refetchUser = useCallback(async () => {
 		try {
 			setIsLoading(true);
-			const userData = await getCurrentUserFn();
-			setRawUser(userData);
-		} catch (error) {
-			console.error("Failed to fetch user:", error);
-			setRawUser(null);
+			const authState = await getAuthenticatedStateFn();
+			if (
+				authState?.userState.currentUser &&
+				authState.userState.isAuthenticated
+			) {
+				setUser(authState.userState);
+			} else {
+				setUser(null);
+			}
+		} catch {
+			setUser(null);
 		} finally {
 			setIsLoading(false);
 		}
@@ -58,24 +54,29 @@ export function AuthProvider({
 	const logout = useCallback(async () => {
 		try {
 			await logoutFn({ data: antiForgeryToken });
+			setUser(null);
+			window.location.href = "/";
 		} catch (error) {
 			console.error("Logout failed:", error);
 		}
-		setRawUser(null);
-		window.location.href = "/";
 	}, [antiForgeryToken]);
 
 	// Initial client-side fetch if no initial user
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally run once on mount
 	useEffect(() => {
-		if (!initialUser && typeof window !== "undefined") {
+		if (!userState) {
 			refetchUser();
 		}
-	}, [initialUser, refetchUser]);
+	}, []);
+
+	useEffect(() => {
+		if (csrfToken) {
+			setCsrfToken(csrfToken);
+		}
+	}, [csrfToken]);
 
 	const value: AuthContextType = {
 		user,
-		rawUser,
-		isAuthenticated,
 		isLoading,
 		csrfToken: antiForgeryToken,
 		login,

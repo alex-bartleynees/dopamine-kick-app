@@ -8,21 +8,21 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { AuthProvider } from "@/providers/AuthProvider";
-import { getAntiforgeryTokenFn, getCurrentUserFn } from "@/server/auth";
-import type { User } from "@/types/auth";
+import { getAuthenticatedStateFn } from "@/server/auth";
+import type { UserState } from "@/types/user";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles/index.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
-	initialUser?: User | null;
+	userState?: UserState | null;
+	csrfToken?: string;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async () => {
-		const initialUser = await getCurrentUserFn();
-		const csrfToken = await getAntiforgeryTokenFn();
-		return { initialUser, csrfToken: csrfToken.requestToken };
+		const authState = await getAuthenticatedStateFn();
+		return authState ?? {};
 	},
 	head: () => ({
 		meta: [
@@ -49,9 +49,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootComponent() {
-	const { initialUser, csrfToken } = Route.useRouteContext();
+	const { userState, csrfToken } = Route.useRouteContext();
 	return (
-		<AuthProvider initialUser={initialUser} csrfToken={csrfToken}>
+		<AuthProvider userState={userState} csrfToken={csrfToken}>
 			<AuthenticatedOutlet />
 		</AuthProvider>
 	);

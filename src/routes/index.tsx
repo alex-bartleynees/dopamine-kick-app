@@ -7,14 +7,14 @@ export const Route = createFileRoute("/")({
 });
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
-	const { isAuthenticated, isLoading } = useAuth();
+	const { user, isLoading } = useAuth();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!isLoading && isAuthenticated) {
+		if (!isLoading && user?.isAuthenticated) {
 			navigate({ to: "/dashboard" });
 		}
-	}, [isAuthenticated, isLoading, navigate]);
+	}, [user?.isAuthenticated, isLoading, navigate]);
 
 	if (isLoading) {
 		return (
@@ -24,7 +24,7 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
 		);
 	}
 
-	if (isAuthenticated) {
+	if (user?.isAuthenticated) {
 		return null;
 	}
 

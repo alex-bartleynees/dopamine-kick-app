@@ -1,9 +1,312 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
+import { Check, Plus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
-export const Route = createFileRoute('/_auth/choose-habits')({
-  component: RouteComponent,
-})
+export const Route = createFileRoute("/_auth/choose-habits")({
+	component: ChooseHabitsScreen,
+});
 
-function RouteComponent() {
-  return <div>Hello "/_auth/choose-habits"!</div>
+interface Habit {
+	id: string;
+	emoji: string;
+	name: string;
+	target: string;
+	isCustom?: boolean;
+	isDefault?: boolean;
+}
+
+const DEFAULT_HABITS: Habit[] = [
+	{
+		id: "exercise",
+		emoji: "🏃",
+		name: "Exercise",
+		target: "20 min",
+		isDefault: true,
+	},
+	{
+		id: "meditation",
+		emoji: "🧘",
+		name: "Meditation",
+		target: "10 min",
+		isDefault: true,
+	},
+	{
+		id: "hydration",
+		emoji: "💧",
+		name: "Hydration",
+		target: "8 glasses",
+		isDefault: true,
+	},
+	{
+		id: "reading",
+		emoji: "📖",
+		name: "Reading",
+		target: "15 min",
+		isDefault: true,
+	},
+	{
+		id: "sleep",
+		emoji: "😴",
+		name: "Sleep Early",
+		target: "Before 11pm",
+		isDefault: true,
+	},
+	{
+		id: "journaling",
+		emoji: "✍️",
+		name: "Journaling",
+		target: "5 min",
+		isDefault: true,
+	},
+	{
+		id: "healthy-eating",
+		emoji: "🥗",
+		name: "Healthy Eating",
+		target: "3 meals",
+		isDefault: true,
+	},
+	{
+		id: "stretching",
+		emoji: "🤸",
+		name: "Stretching",
+		target: "10 min",
+		isDefault: true,
+	},
+];
+
+export function ChooseHabitsScreen() {
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+	const [showCustomForm, setShowCustomForm] = useState(false);
+	const [customHabits, setCustomHabits] = useState<Habit[]>([]);
+	const [customName, setCustomName] = useState("");
+	const [customEmoji, setCustomEmoji] = useState("🎯");
+	const [customTarget, setCustomTarget] = useState("");
+
+	const allHabits = [...DEFAULT_HABITS, ...customHabits];
+
+	const closeModal = useCallback(() => {
+		setShowCustomForm(false);
+	}, []);
+
+	useEffect(() => {
+		const handleEscKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape" && showCustomForm) {
+				closeModal();
+			}
+		};
+
+		document.addEventListener("keydown", handleEscKey);
+		return () => {
+			document.removeEventListener("keydown", handleEscKey);
+		};
+	}, [showCustomForm, closeModal]);
+
+	const toggleHabit = (id: string) => {
+		const newSelected = new Set(selectedIds);
+		if (newSelected.has(id)) {
+			newSelected.delete(id);
+		} else {
+			newSelected.add(id);
+		}
+		setSelectedIds(newSelected);
+	};
+
+	const handleAddCustomHabit = () => {
+		if (customName && customTarget) {
+			const newHabit: Habit = {
+				id: `custom-${Date.now()}`,
+				emoji: customEmoji,
+				name: customName,
+				target: customTarget,
+				isCustom: true,
+			};
+			setCustomHabits([...customHabits, newHabit]);
+			setSelectedIds(new Set([...selectedIds, newHabit.id]));
+			setCustomName("");
+			setCustomTarget("");
+			setCustomEmoji("🎯");
+			setShowCustomForm(false);
+		}
+	};
+
+	const handleContinue = () => {
+		const selected = allHabits.filter((habit) => selectedIds.has(habit.id));
+		console.log("Selected Habits:", selected);
+	};
+
+	const canContinue = selectedIds.size >= 3;
+
+	return (
+		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
+			<div className="max-w-4xl w-full">
+				<div className="animate-fade-in-up">
+					{/* Header */}
+					<div className="text-center mb-8">
+						<h1 className="mb-3">What habits do you want to build?</h1>
+						<p className="text-gray-600">
+							Pick 3-5 to start. You can add more later.
+						</p>
+					</div>
+
+					{/* Habit Grid */}
+					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+						{allHabits.map((habit, index) => {
+							const isSelected = selectedIds.has(habit.id);
+							return (
+								<button
+									type="button"
+									key={habit.id}
+									onClick={() => toggleHabit(habit.id)}
+									style={{ animationDelay: `${index * 50}ms` }}
+									className={`relative bg-white rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
+										isSelected
+											? "border-2 border-purple-500 shadow-lg shadow-purple-200"
+											: "border-2 border-gray-100 shadow hover:shadow-md"
+									}`}
+								>
+									{isSelected && (
+										<div className="absolute -top-2 -right-2 bg-linear-to-br from-blue-500 to-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg animate-pop-in">
+											<Check className="w-4 h-4" />
+										</div>
+									)}
+									<div className="text-5xl mb-3">{habit.emoji}</div>
+									<div className="font-medium mb-1">{habit.name}</div>
+									<div className="text-sm text-gray-500">{habit.target}</div>
+								</button>
+							);
+						})}
+
+						{/* Custom Habit Card */}
+						<button
+							type="button"
+							onClick={() => setShowCustomForm(true)}
+							style={{ animationDelay: `${allHabits.length * 50}ms` }}
+							className="bg-white rounded-2xl p-6 text-center border-2 border-dashed border-gray-300 hover:border-purple-400 transition-all duration-300 hover:scale-105 animate-scale-in"
+						>
+							<div className="text-5xl mb-3">
+								<Plus className="w-12 h-12 mx-auto text-gray-400" />
+							</div>
+							<div className="font-medium text-gray-700 mb-1">Custom Habit</div>
+							<div className="text-sm text-gray-500">Add your own</div>
+						</button>
+					</div>
+
+					{/* Continue Button */}
+					<button
+						type="button"
+						onClick={handleContinue}
+						disabled={!canContinue}
+						className={`w-full py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 animate-fade-in-up animation-delay-300 ${
+							canContinue
+								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
+								: "bg-gray-200 text-gray-400 cursor-not-allowed"
+						}`}
+					>
+						Continue ({selectedIds.size} selected)
+					</button>
+				</div>
+			</div>
+
+			{/* Custom Habit Modal */}
+			{showCustomForm && (
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="custom-habit-modal-title"
+					className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50 animate-fade-in"
+				>
+					{/* Backdrop - click to close */}
+					<button
+						type="button"
+						className="absolute inset-0 bg-transparent cursor-default border-none"
+						onClick={closeModal}
+						aria-label="Close modal"
+					/>
+					<div
+						role="document"
+						className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-modal-pop"
+					>
+						<h2 id="custom-habit-modal-title" className="mb-6">
+							Create Custom Habit
+						</h2>
+
+						<div className="space-y-4">
+							<div>
+								<label
+									htmlFor="custom-habit-emoji"
+									className="block text-sm mb-2 text-gray-700"
+								>
+									Emoji
+								</label>
+								<input
+									id="custom-habit-emoji"
+									type="text"
+									value={customEmoji}
+									onChange={(e) => setCustomEmoji(e.target.value)}
+									maxLength={2}
+									className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all text-center text-3xl"
+								/>
+							</div>
+
+							<div>
+								<label
+									htmlFor="custom-habit-name"
+									className="block text-sm mb-2 text-gray-700"
+								>
+									Habit Name
+								</label>
+								<input
+									id="custom-habit-name"
+									type="text"
+									value={customName}
+									onChange={(e) => setCustomName(e.target.value)}
+									placeholder="e.g., Learn Spanish"
+									className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+								/>
+							</div>
+
+							<div>
+								<label
+									htmlFor="custom-habit-target"
+									className="block text-sm mb-2 text-gray-700"
+								>
+									Target
+								</label>
+								<input
+									id="custom-habit-target"
+									type="text"
+									value={customTarget}
+									onChange={(e) => setCustomTarget(e.target.value)}
+									placeholder="e.g., 15 min"
+									className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+								/>
+							</div>
+
+							<div className="flex gap-3 pt-4">
+								<button
+									type="button"
+									onClick={closeModal}
+									className="flex-1 py-3 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleAddCustomHabit}
+									disabled={!customName || !customTarget}
+									className={`flex-1 py-3 px-6 rounded-xl transition-all ${
+										customName && customTarget
+											? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg"
+											: "bg-gray-200 text-gray-400 cursor-not-allowed"
+									}`}
+								>
+									Add Habit
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+		</div>
+	);
 }
