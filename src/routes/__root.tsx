@@ -25,7 +25,10 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async () => {
 		const authState = await getAuthenticatedStateFn();
-		return authState ?? {};
+		if (!authState) {
+			return { userState: null, csrfToken: "" };
+		}
+		return authState;
 	},
 	loader: () => getThemeServerFn(),
 	head: () => ({

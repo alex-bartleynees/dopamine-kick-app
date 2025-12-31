@@ -2,15 +2,13 @@ import type React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
 import type { UserState } from "@/types/user";
 import { setCsrfToken } from "../lib/csrf-store";
-import { getAuthenticatedStateFn, logoutFn } from "../server/auth";
+import { logoutFn } from "../server/auth";
 
 interface AuthContextType {
 	user: UserState | null;
-	isLoading: boolean;
 	csrfToken: string;
 	login: () => void;
 	logout: () => Promise<void>;
-	refetchUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -25,27 +23,7 @@ export function AuthProvider({
 	csrfToken?: string;
 }) {
 	const [user, setUser] = useState<UserState | null>(userState || null);
-	const [isLoading, setIsLoading] = useState(!userState);
 	const antiForgeryToken = csrfToken ?? "";
-
-	const refetchUser = useCallback(async () => {
-		try {
-			setIsLoading(true);
-			const authState = await getAuthenticatedStateFn();
-			if (
-				authState?.userState.currentUser &&
-				authState.userState.isAuthenticated
-			) {
-				setUser(authState.userState);
-			} else {
-				setUser(null);
-			}
-		} catch {
-			setUser(null);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
 
 	const login = useCallback(() => {
 		window.location.href = "/bff/login";
@@ -61,14 +39,6 @@ export function AuthProvider({
 		}
 	}, [antiForgeryToken]);
 
-	// Initial client-side fetch if no initial user
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally run once on mount
-	useEffect(() => {
-		if (!userState) {
-			refetchUser();
-		}
-	}, []);
-
 	useEffect(() => {
 		if (csrfToken) {
 			setCsrfToken(csrfToken);
@@ -77,11 +47,9 @@ export function AuthProvider({
 
 	const value: AuthContextType = {
 		user,
-		isLoading,
 		csrfToken: antiForgeryToken,
 		login,
 		logout,
-		refetchUser,
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -31,5 +31,5 @@ function Dashboard() {
 				</button>
 			</div>
 		</div>
-	);
+	)
 }

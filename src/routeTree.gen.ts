@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SignoutCallbackOidcRouteImport } from './routes/signout-callback-oidc'
 import { Route as SigninOidcRouteImport } from './routes/signin-oidc'
+import { Route as ErrorRouteImport } from './routes/error'
 import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BffLoginRouteImport } from './routes/bff/login'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
@@ -33,8 +35,18 @@ const SigninOidcRoute = SigninOidcRouteImport.update({
   path: '/signin-oidc',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ErrorRoute = ErrorRouteImport.update({
+  id: '/error',
+  path: '/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -60,6 +72,8 @@ const AuthChooseHabitsRoute = AuthChooseHabitsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/error': typeof ErrorRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
@@ -69,6 +83,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/error': typeof ErrorRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
@@ -79,7 +95,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/error': typeof ErrorRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
@@ -91,6 +109,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
+    | '/error'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
@@ -100,6 +120,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
+    | '/error'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
@@ -109,7 +131,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/_auth'
+    | '/error'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
@@ -120,7 +144,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AuthRoute: typeof AuthRouteWithChildren
+  ErrorRoute: typeof ErrorRoute
   SigninOidcRoute: typeof SigninOidcRoute
   SignoutCallbackOidcRoute: typeof SignoutCallbackOidcRoute
   SignupRoute: typeof SignupRoute
@@ -150,11 +176,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninOidcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/error': {
+      id: '/error'
+      path: '/error'
+      fullPath: '/error'
+      preLoaderRoute: typeof ErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -202,7 +242,9 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AuthRoute: AuthRouteWithChildren,
+  ErrorRoute: ErrorRoute,
   SigninOidcRoute: SigninOidcRoute,
   SignoutCallbackOidcRoute: SignoutCallbackOidcRoute,
   SignupRoute: SignupRoute,
