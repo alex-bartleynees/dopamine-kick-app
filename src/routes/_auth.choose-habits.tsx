@@ -1,19 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import type { Habit } from "@/types/habit";
+import { useHabitStore } from "@/stores/habit-store";
 
 export const Route = createFileRoute("/_auth/choose-habits")({
 	component: ChooseHabitsScreen,
 });
-
-interface Habit {
-	id: string;
-	emoji: string;
-	name: string;
-	target: string;
-	isCustom?: boolean;
-	isDefault?: boolean;
-}
 
 const DEFAULT_HABITS: Habit[] = [
 	{
@@ -75,7 +68,7 @@ const DEFAULT_HABITS: Habit[] = [
 ];
 
 export function ChooseHabitsScreen() {
-	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+	const { selectedHabits, toggleHabit } = useHabitStore();
 	const [showCustomForm, setShowCustomForm] = useState(false);
 	const [customHabits, setCustomHabits] = useState<Habit[]>([]);
 	const [customName, setCustomName] = useState("");
@@ -83,6 +76,7 @@ export function ChooseHabitsScreen() {
 	const [customTarget, setCustomTarget] = useState("");
 
 	const allHabits = [...DEFAULT_HABITS, ...customHabits];
+	const selectedIds = new Set(selectedHabits.map((h) => h.id));
 
 	const closeModal = useCallback(() => {
 		setShowCustomForm(false);
@@ -101,14 +95,8 @@ export function ChooseHabitsScreen() {
 		};
 	}, [showCustomForm, closeModal]);
 
-	const toggleHabit = (id: string) => {
-		const newSelected = new Set(selectedIds);
-		if (newSelected.has(id)) {
-			newSelected.delete(id);
-		} else {
-			newSelected.add(id);
-		}
-		setSelectedIds(newSelected);
+	const handleToggleHabit = (habit: Habit) => {
+		toggleHabit(habit);
 	};
 
 	const handleAddCustomHabit = () => {
@@ -121,7 +109,7 @@ export function ChooseHabitsScreen() {
 				isCustom: true,
 			};
 			setCustomHabits([...customHabits, newHabit]);
-			setSelectedIds(new Set([...selectedIds, newHabit.id]));
+			toggleHabit(newHabit);
 			setCustomName("");
 			setCustomTarget("");
 			setCustomEmoji("🎯");
@@ -130,8 +118,7 @@ export function ChooseHabitsScreen() {
 	};
 
 	const handleContinue = () => {
-		const selected = allHabits.filter((habit) => selectedIds.has(habit.id));
-		console.log("Selected Habits:", selected);
+		console.log("Selected Habits:", selectedHabits);
 	};
 
 	const canContinue = selectedIds.size >= 3;
@@ -156,7 +143,7 @@ export function ChooseHabitsScreen() {
 								<button
 									type="button"
 									key={habit.id}
-									onClick={() => toggleHabit(habit.id)}
+									onClick={() => handleToggleHabit(habit)}
 									style={{ animationDelay: `${index * 50}ms` }}
 									className={`relative bg-white dark:bg-gray-800 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
 										isSelected
@@ -171,7 +158,9 @@ export function ChooseHabitsScreen() {
 									)}
 									<div className="text-5xl mb-3">{habit.emoji}</div>
 									<div className="font-medium mb-1">{habit.name}</div>
-									<div className="text-sm text-gray-500 dark:text-gray-400">{habit.target}</div>
+									<div className="text-sm text-gray-500 dark:text-gray-400">
+										{habit.target}
+									</div>
 								</button>
 							);
 						})}
@@ -186,8 +175,12 @@ export function ChooseHabitsScreen() {
 							<div className="text-5xl mb-3">
 								<Plus className="w-12 h-12 mx-auto text-gray-400" />
 							</div>
-							<div className="font-medium text-gray-700 dark:text-gray-200 mb-1">Custom Habit</div>
-							<div className="text-sm text-gray-500 dark:text-gray-400">Add your own</div>
+							<div className="font-medium text-gray-700 dark:text-gray-200 mb-1">
+								Custom Habit
+							</div>
+							<div className="text-sm text-gray-500 dark:text-gray-400">
+								Add your own
+							</div>
 						</button>
 					</div>
 
