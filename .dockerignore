@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Build outputs (we build fresh in Docker)
+.output
+.nitro
+.tanstack
+.vinxi
+dist
+dist-ssr
+
+# Development files
+.git
+.gitignore
+*.md
+.env*
+.env.local
+.DS_Store
+
+# IDE
+.vscode
+.idea
+
+# Testing
+coverage
+
+# Misc
+*.log
+.direnv
+todos.json
