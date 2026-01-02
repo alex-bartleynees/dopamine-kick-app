@@ -1,86 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import type { Habit } from "@/types/habit";
 import { useHabitStore } from "@/stores/habit-store";
-import { z } from "zod";
-
-const customHabitSchema = z.object({
-	id: z.string(),
-	emoji: z.string(),
-	name: z.string(),
-	target: z.string(),
-	isCustom: z.literal(true),
-});
-
-const searchSchema = z.object({
-	selectedIds: z.array(z.string()).default([]),
-	customHabits: z.array(customHabitSchema).default([]),
-});
-
-type SearchParams = z.infer<typeof searchSchema>;
+import {
+	DEFAULT_HABITS,
+	habitSearchSchema,
+	type HabitSearchParams,
+} from "@/schemas/habit";
+import type { Habit } from "@/types/habit";
 
 export const Route = createFileRoute("/_auth/choose-habits")({
 	component: ChooseHabitsScreen,
-	validateSearch: (search: Record<string, unknown>): SearchParams => {
-		const result = searchSchema.safeParse(search);
+	validateSearch: (search: Record<string, unknown>): HabitSearchParams => {
+		const result = habitSearchSchema.safeParse(search);
 		if (result.success) {
 			return result.data;
 		}
 		return { selectedIds: [], customHabits: [] };
 	},
 });
-
-const DEFAULT_HABITS: Habit[] = [
-	{
-		id: "exercise",
-		emoji: "🏃",
-		name: "Exercise",
-		target: "20 min",
-	},
-	{
-		id: "meditation",
-		emoji: "🧘",
-		name: "Meditation",
-		target: "10 min",
-	},
-	{
-		id: "hydration",
-		emoji: "💧",
-		name: "Hydration",
-		target: "8 glasses",
-	},
-	{
-		id: "reading",
-		emoji: "📖",
-		name: "Reading",
-		target: "15 min",
-	},
-	{
-		id: "sleep",
-		emoji: "😴",
-		name: "Sleep Early",
-		target: "Before 11pm",
-	},
-	{
-		id: "journaling",
-		emoji: "✍️",
-		name: "Journaling",
-		target: "5 min",
-	},
-	{
-		id: "healthy-eating",
-		emoji: "🥗",
-		name: "Healthy Eating",
-		target: "3 meals",
-	},
-	{
-		id: "stretching",
-		emoji: "🤸",
-		name: "Stretching",
-		target: "10 min",
-	},
-];
 
 export function ChooseHabitsScreen() {
 	const { selectedHabits, toggleHabit, setSelectedHabits } = useHabitStore();
@@ -227,6 +165,13 @@ export function ChooseHabitsScreen() {
 
 	const handleContinue = () => {
 		console.log("Selected Habits:", selectedHabits);
+		navigate({
+			to: "/set-tempo",
+			search: {
+				selectedIds: search.selectedIds,
+				customHabits: search.customHabits,
+			},
+		});
 	};
 
 	const canContinue = selectedIds.size >= 3;

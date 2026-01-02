@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BffLoginRouteImport } from './routes/bff/login'
+import { Route as AuthSetTempoRouteImport } from './routes/_auth.set-tempo'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthChooseHabitsRouteImport } from './routes/_auth.choose-habits'
 
@@ -59,6 +60,11 @@ const BffLoginRoute = BffLoginRouteImport.update({
   path: '/bff/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthSetTempoRoute = AuthSetTempoRouteImport.update({
+  id: '/set-tempo',
+  path: '/set-tempo',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/set-tempo': typeof AuthSetTempoRoute
   '/bff/login': typeof BffLoginRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/set-tempo': typeof AuthSetTempoRoute
   '/bff/login': typeof BffLoginRoute
 }
 export interface FileRoutesById {
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_auth/choose-habits': typeof AuthChooseHabitsRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/set-tempo': typeof AuthSetTempoRoute
   '/bff/login': typeof BffLoginRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/choose-habits'
     | '/dashboard'
+    | '/set-tempo'
     | '/bff/login'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/choose-habits'
     | '/dashboard'
+    | '/set-tempo'
     | '/bff/login'
   id:
     | '__root__'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_auth/choose-habits'
     | '/_auth/dashboard'
+    | '/_auth/set-tempo'
     | '/bff/login'
   fileRoutesById: FileRoutesById
 }
@@ -211,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BffLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/set-tempo': {
+      id: '/_auth/set-tempo'
+      path: '/set-tempo'
+      fullPath: '/set-tempo'
+      preLoaderRoute: typeof AuthSetTempoRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
       path: '/dashboard'
@@ -231,11 +250,13 @@ declare module '@tanstack/react-router' {
 interface AuthRouteChildren {
   AuthChooseHabitsRoute: typeof AuthChooseHabitsRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthSetTempoRoute: typeof AuthSetTempoRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthChooseHabitsRoute: AuthChooseHabitsRoute,
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthSetTempoRoute: AuthSetTempoRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
