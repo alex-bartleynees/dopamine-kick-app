@@ -1,11 +1,34 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { Habit } from "@/types/habit";
 import { useHabitStore } from "@/stores/habit-store";
+import { z } from "zod";
+
+const customHabitSchema = z.object({
+	id: z.string(),
+	emoji: z.string(),
+	name: z.string(),
+	target: z.string(),
+	isCustom: z.literal(true),
+});
+
+const searchSchema = z.object({
+	selectedIds: z.array(z.string()).default([]),
+	customHabits: z.array(customHabitSchema).default([]),
+});
+
+type SearchParams = z.infer<typeof searchSchema>;
 
 export const Route = createFileRoute("/_auth/choose-habits")({
 	component: ChooseHabitsScreen,
+	validateSearch: (search: Record<string, unknown>): SearchParams => {
+		const result = searchSchema.safeParse(search);
+		if (result.success) {
+			return result.data;
+		}
+		return { selectedIds: [], customHabits: [] };
+	},
 });
 
 const DEFAULT_HABITS: Habit[] = [
@@ -14,66 +37,94 @@ const DEFAULT_HABITS: Habit[] = [
 		emoji: "🏃",
 		name: "Exercise",
 		target: "20 min",
-		isDefault: true,
 	},
 	{
 		id: "meditation",
 		emoji: "🧘",
 		name: "Meditation",
 		target: "10 min",
-		isDefault: true,
 	},
 	{
 		id: "hydration",
 		emoji: "💧",
 		name: "Hydration",
 		target: "8 glasses",
-		isDefault: true,
 	},
 	{
 		id: "reading",
 		emoji: "📖",
 		name: "Reading",
 		target: "15 min",
-		isDefault: true,
 	},
 	{
 		id: "sleep",
 		emoji: "😴",
 		name: "Sleep Early",
 		target: "Before 11pm",
-		isDefault: true,
 	},
 	{
 		id: "journaling",
 		emoji: "✍️",
 		name: "Journaling",
 		target: "5 min",
-		isDefault: true,
 	},
 	{
 		id: "healthy-eating",
 		emoji: "🥗",
 		name: "Healthy Eating",
 		target: "3 meals",
-		isDefault: true,
 	},
 	{
 		id: "stretching",
 		emoji: "🤸",
 		name: "Stretching",
 		target: "10 min",
-		isDefault: true,
 	},
 ];
 
 export function ChooseHabitsScreen() {
-	const { selectedHabits, toggleHabit } = useHabitStore();
+	const { selectedHabits, toggleHabit, setSelectedHabits } = useHabitStore();
+	const search = Route.useSearch();
+	const navigate = useNavigate({ from: Route.fullPath });
 	const [showCustomForm, setShowCustomForm] = useState(false);
-	const [customHabits, setCustomHabits] = useState<Habit[]>([]);
+	const [customHabits, setCustomHabits] = useState<Habit[]>(
+		search.customHabits,
+	);
 	const [customName, setCustomName] = useState("");
 	const [customEmoji, setCustomEmoji] = useState("🎯");
 	const [customTarget, setCustomTarget] = useState("");
+	const [isInitialized, setIsInitialized] = useState(false);
+
+	// Restore state from URL on mount
+	useEffect(() => {
+		if (isInitialized) return;
+
+		const habitsFromUrl: Habit[] = [];
+
+		// Restore default habits from selectedIds
+		for (const id of search.selectedIds) {
+			const defaultHabit = DEFAULT_HABITS.find((h) => h.id === id);
+			if (defaultHabit) {
+				habitsFromUrl.push(defaultHabit);
+			}
+		}
+
+		// Restore custom habits
+		for (const customHabit of search.customHabits) {
+			habitsFromUrl.push(customHabit);
+		}
+
+		if (habitsFromUrl.length > 0) {
+			setSelectedHabits(habitsFromUrl);
+		}
+
+		setIsInitialized(true);
+	}, [
+		search.selectedIds,
+		search.customHabits,
+		setSelectedHabits,
+		isInitialized,
+	]);
 
 	const allHabits = [...DEFAULT_HABITS, ...customHabits];
 	const selectedIds = new Set(selectedHabits.map((h) => h.id));
@@ -97,6 +148,44 @@ export function ChooseHabitsScreen() {
 
 	const handleToggleHabit = (habit: Habit) => {
 		toggleHabit(habit);
+
+		// Update URL with new selection state
+		const isCurrentlySelected = selectedIds.has(habit.id);
+
+		navigate({
+			search: (prev) => {
+				if (isCurrentlySelected) {
+					// Remove from selection
+					return {
+						...prev,
+						selectedIds: prev.selectedIds.filter((id) => id !== habit.id),
+						customHabits: habit.isCustom
+							? prev.customHabits.filter((h) => h.id !== habit.id)
+							: prev.customHabits,
+					};
+				}
+				// Add to selection
+				return {
+					...prev,
+					selectedIds: habit.isCustom
+						? prev.selectedIds
+						: [...prev.selectedIds, habit.id],
+					customHabits: habit.isCustom
+						? [
+								...prev.customHabits,
+								{
+									id: habit.id,
+									emoji: habit.emoji,
+									name: habit.name,
+									target: habit.target,
+									isCustom: true as const,
+								},
+							]
+						: prev.customHabits,
+				};
+			},
+			replace: true,
+		});
 	};
 
 	const handleAddCustomHabit = () => {
@@ -110,6 +199,25 @@ export function ChooseHabitsScreen() {
 			};
 			setCustomHabits([...customHabits, newHabit]);
 			toggleHabit(newHabit);
+
+			// Add custom habit to URL
+			navigate({
+				search: (prev) => ({
+					...prev,
+					customHabits: [
+						...prev.customHabits,
+						{
+							id: newHabit.id,
+							emoji: newHabit.emoji,
+							name: newHabit.name,
+							target: newHabit.target,
+							isCustom: true as const,
+						},
+					],
+				}),
+				replace: true,
+			});
+
 			setCustomName("");
 			setCustomTarget("");
 			setCustomEmoji("🎯");

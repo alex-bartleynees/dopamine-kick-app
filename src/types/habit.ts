@@ -4,5 +4,4 @@ export interface Habit {
 	name: string;
 	target: string;
 	isCustom?: boolean;
-	isDefault?: boolean;
 }
