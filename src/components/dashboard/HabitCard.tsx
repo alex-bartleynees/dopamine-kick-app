@@ -1,5 +1,5 @@
 import { Check, Flame } from "lucide-react";
-import { Habit } from "@/types/habit";
+import type { Habit } from "@/types/habit";
 
 export interface HabitProgress {
 	habitId: string;
@@ -40,9 +40,9 @@ export function HabitCard({
 			>
 				<div className="flex items-center gap-4">
 					<div
-						className={`relative flex-shrink-0 w-12 h-12 rounded-xl border-2 transition-[border-color,background-color] duration-300 ${
+						className={`relative shrink-0 w-12 h-12 rounded-xl border-2 transition-[border-color,background-color] duration-300 ${
 							progress.completed
-								? "bg-gradient-to-br from-blue-500 to-purple-500 border-purple-400"
+								? "bg-linear-to-br from-blue-500 to-purple-500 border-purple-400"
 								: "border-gray-300 dark:border-gray-600 hover:border-purple-400"
 						}`}
 					>
@@ -72,7 +72,7 @@ export function HabitCard({
 					</div>
 
 					{progress.streak > 0 && (
-						<div className="flex items-center gap-2 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 px-4 py-2 rounded-xl">
+						<div className="flex items-center gap-2 bg-linear-to-br from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 px-4 py-2 rounded-xl">
 							<Flame className="w-5 h-5 text-orange-500" />
 							<span className="font-bold text-orange-600 dark:text-orange-400">
 								{progress.streak}

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Award, Calendar, TrendingUp } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ConfettiParticle, HabitProgress } from "@/components/dashboard";
 import {
 	AllCompleteModal,
@@ -41,6 +41,9 @@ function Dashboard() {
 	const [confettiParticles, setConfettiParticles] = useState<
 		ConfettiParticle[]
 	>([]);
+	const celebrationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 
 	const completedCount = Array.from(habitProgress.values()).filter(
 		(p) => p.completed,
@@ -86,6 +89,14 @@ function Dashboard() {
 		}
 	}, [allCompleted]);
 
+	useEffect(() => {
+		return () => {
+			if (celebrationTimeoutRef.current) {
+				clearTimeout(celebrationTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	const toggleHabit = (habitId: string) => {
 		const newProgress = new Map(habitProgress);
 		const current = newProgress.get(habitId);
@@ -122,8 +133,14 @@ function Dashboard() {
 			} else {
 				setCelebrationMessage(`${habit?.name} completed! 🔥`);
 			}
+			if (celebrationTimeoutRef.current) {
+				clearTimeout(celebrationTimeoutRef.current);
+			}
 			setShowCelebration(true);
-			setTimeout(() => setShowCelebration(false), 3000);
+			celebrationTimeoutRef.current = setTimeout(
+				() => setShowCelebration(false),
+				3000,
+			);
 		}
 	};
 
@@ -140,7 +157,7 @@ function Dashboard() {
 							<p className="text-gray-600 dark:text-gray-300">{today}</p>
 						</div>
 						<div className="text-right">
-							<div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+							<div className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
 								{completedCount}/{totalHabits}
 							</div>
 							<div className="text-sm text-gray-600 dark:text-gray-400">
@@ -153,7 +170,7 @@ function Dashboard() {
 					<div className="mt-6">
 						<div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
 							<div
-								className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
+								className="h-full bg-linear-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
 								style={{ width: mounted ? `${completionPercentage}%` : "0%" }}
 							/>
 						</div>

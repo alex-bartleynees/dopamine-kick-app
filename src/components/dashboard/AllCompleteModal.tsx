@@ -46,8 +46,8 @@ export function AllCompleteModal({ userName, onClose }: AllCompleteModalProps) {
 						we're talking about! 🎯
 					</p>
 
-					<div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl p-4 mb-6">
-						<div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-1">
+					<div className="bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl p-4 mb-6">
+						<div className="text-4xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-1">
 							100%
 						</div>
 						<div className="text-sm text-gray-600 dark:text-gray-400">
@@ -58,7 +58,7 @@ export function AllCompleteModal({ userName, onClose }: AllCompleteModalProps) {
 					<button
 						type="button"
 						onClick={onClose}
-						className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
+						className="w-full bg-linear-to-r from-blue-500 to-purple-500 text-white py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
 					>
 						Keep It Up! 💪
 					</button>
