@@ -6,12 +6,7 @@ export interface ConfettiParticle {
 	startX: number;
 }
 
-interface ConfettiParticleProps {
-	emoji: string;
-	delay: number;
-	duration: number;
-	startX: number;
-}
+type ConfettiParticleProps = Omit<ConfettiParticle, "id">;
 
 export function ConfettiParticleComponent({
 	emoji,

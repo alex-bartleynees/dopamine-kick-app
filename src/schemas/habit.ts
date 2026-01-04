@@ -1,5 +1,12 @@
 import { z } from "zod";
-import type { Habit } from "@/types/habit";
+
+export const habitSchema = z.object({
+	id: z.string(),
+	emoji: z.string(),
+	name: z.string(),
+	target: z.string(),
+	isCustom: z.boolean().optional(),
+});
 
 export const customHabitSchema = z.object({
 	id: z.string(),
@@ -14,6 +21,19 @@ export const habitSearchSchema = z.object({
 	customHabits: z.array(customHabitSchema).default([]),
 });
 
+export const habitForCreationSchema = z.object({
+	name: z.string(),
+	emoji: z.string(),
+	target: z.string(),
+});
+
+export const bulkHabitsForCreationSchema = z.object({
+	habits: z.array(habitForCreationSchema),
+});
+
+export type Habit = z.infer<typeof habitSchema>;
+export type HabitForCreation = z.infer<typeof habitForCreationSchema>;
+export type CustomHabit = z.infer<typeof customHabitSchema>;
 export type HabitSearchParams = z.infer<typeof habitSearchSchema>;
 
 export const DEFAULT_HABITS: Habit[] = [

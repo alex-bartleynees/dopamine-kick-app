@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/select";
 import {
 	DEFAULT_HABITS,
+	type Habit,
 	type HabitSearchParams,
 	habitSearchSchema,
 } from "@/schemas/habit";
-import type { Habit } from "@/types/habit";
 
 export const Route = createFileRoute("/_auth/set-tempo")({
 	component: RouteComponent,

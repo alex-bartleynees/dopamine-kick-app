@@ -12,7 +12,7 @@ import { getThemeServerFn } from "@/lib/theme";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { getAuthenticatedStateFn } from "@/server/auth";
-import type { UserState } from "@/types/user";
+import type { UserState } from "@/schemas/user";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles/index.css?url";
 

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Award, Calendar, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ConfettiParticle, HabitProgress } from "@/components/dashboard";
@@ -10,14 +10,24 @@ import {
 	StatsCard,
 } from "@/components/dashboard";
 import { useAuth } from "@/hooks/useAuth";
-import { useHabitStore } from "@/stores/habit-store";
+import { getHabitsFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/dashboard")({
+	loader: async () => {
+		const habits = await getHabitsFn();
+		if (habits.length === 0) {
+			throw redirect({
+				to: "/choose-habits",
+				search: { selectedIds: [], customHabits: [] },
+			});
+		}
+		return { habits };
+	},
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const { selectedHabits: habits } = useHabitStore();
+	const { habits } = Route.useLoaderData();
 	const { user } = useAuth();
 	const [habitProgress, setHabitProgress] = useState<
 		Map<string, HabitProgress>

@@ -1,13 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useHabitStore } from "@/stores/habit-store";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
 	DEFAULT_HABITS,
-	habitSearchSchema,
+	type Habit,
 	type HabitSearchParams,
+	habitSearchSchema,
 } from "@/schemas/habit";
-import type { Habit } from "@/types/habit";
+import { bulkCreateHabitsFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/choose-habits")({
 	component: ChooseHabitsScreen,
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_auth/choose-habits")({
 });
 
 export function ChooseHabitsScreen() {
-	const { selectedHabits, toggleHabit, setSelectedHabits } = useHabitStore();
+	const { csrfToken } = useAuth();
 	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const [showCustomForm, setShowCustomForm] = useState(false);
@@ -31,38 +32,22 @@ export function ChooseHabitsScreen() {
 	const [customName, setCustomName] = useState("");
 	const [customEmoji, setCustomEmoji] = useState("🎯");
 	const [customTarget, setCustomTarget] = useState("");
-	const [isInitialized, setIsInitialized] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 
-	// Restore state from URL on mount
-	useEffect(() => {
-		if (isInitialized) return;
-
-		const habitsFromUrl: Habit[] = [];
-
-		// Restore default habits from selectedIds
+	// Derive selected habits from URL state
+	const selectedHabits = useMemo(() => {
+		const habits: Habit[] = [];
 		for (const id of search.selectedIds) {
 			const defaultHabit = DEFAULT_HABITS.find((h) => h.id === id);
 			if (defaultHabit) {
-				habitsFromUrl.push(defaultHabit);
+				habits.push(defaultHabit);
 			}
 		}
-
-		// Restore custom habits
 		for (const customHabit of search.customHabits) {
-			habitsFromUrl.push(customHabit);
+			habits.push(customHabit);
 		}
-
-		if (habitsFromUrl.length > 0) {
-			setSelectedHabits(habitsFromUrl);
-		}
-
-		setIsInitialized(true);
-	}, [
-		search.selectedIds,
-		search.customHabits,
-		setSelectedHabits,
-		isInitialized,
-	]);
+		return habits;
+	}, [search.selectedIds, search.customHabits]);
 
 	const allHabits = [...DEFAULT_HABITS, ...customHabits];
 	const selectedIds = new Set(selectedHabits.map((h) => h.id));
@@ -85,9 +70,6 @@ export function ChooseHabitsScreen() {
 	}, [showCustomForm, closeModal]);
 
 	const handleToggleHabit = (habit: Habit) => {
-		toggleHabit(habit);
-
-		// Update URL with new selection state
 		const isCurrentlySelected = selectedIds.has(habit.id);
 
 		navigate({
@@ -136,7 +118,6 @@ export function ChooseHabitsScreen() {
 				isCustom: true,
 			};
 			setCustomHabits([...customHabits, newHabit]);
-			toggleHabit(newHabit);
 
 			// Add custom habit to URL
 			navigate({
@@ -163,15 +144,25 @@ export function ChooseHabitsScreen() {
 		}
 	};
 
-	const handleContinue = () => {
-		console.log("Selected Habits:", selectedHabits);
-		navigate({
-			to: "/set-tempo",
-			search: {
-				selectedIds: search.selectedIds,
-				customHabits: search.customHabits,
-			},
-		});
+	const handleContinue = async () => {
+		setIsSaving(true);
+		try {
+			const habitsToCreate = selectedHabits.map((habit) => ({
+				name: habit.name,
+				emoji: habit.emoji,
+				target: habit.target,
+			}));
+			await bulkCreateHabitsFn({ data: { habits: habitsToCreate, csrfToken } });
+			navigate({
+				to: "/set-tempo",
+				search: {
+					selectedIds: search.selectedIds,
+					customHabits: search.customHabits,
+				},
+			});
+		} catch {
+			setIsSaving(false);
+		}
 	};
 
 	const canContinue = selectedIds.size >= 3;
@@ -241,14 +232,14 @@ export function ChooseHabitsScreen() {
 					<button
 						type="button"
 						onClick={handleContinue}
-						disabled={!canContinue}
+						disabled={!canContinue || isSaving}
 						className={`w-full py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 animate-fade-in-up animation-delay-300 ${
-							canContinue
+							canContinue && !isSaving
 								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
 								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 						}`}
 					>
-						Continue ({selectedIds.size} selected)
+						{isSaving ? "Saving..." : `Continue (${selectedIds.size} selected)`}
 					</button>
 				</div>
 			</div>

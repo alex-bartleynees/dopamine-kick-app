@@ -1,5 +1,5 @@
 import { Check, Flame } from "lucide-react";
-import type { Habit } from "@/types/habit";
+import type { Habit } from "@/schemas/habit";
 
 export interface HabitProgress {
 	habitId: string;

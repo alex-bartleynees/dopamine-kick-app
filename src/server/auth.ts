@@ -1,28 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { type BffUserResponse, getClaimValue } from "@/types/auth";
-import type { UserState } from "@/types/user";
+import {
+	type AntiforgeryResponse,
+	type BffUserResponse,
+	antiforgeryResponseSchema,
+	bffUserResponseSchema,
+	getClaimValue,
+} from "@/schemas/auth";
+import type { UserState } from "@/schemas/user";
 import {
 	BACKEND_URL,
 	forwardResponseCookies,
 	getProxyHeaders,
 } from "../lib/proxy-utils";
 import { getCurrentUserFn } from "./users";
-
-const bffClaimSchema = z.object({
-	type: z.string(),
-	value: z.string(),
-});
-
-const bffUserResponseSchema = z.object({
-	isAuthenticated: z.boolean(),
-	claims: z.array(bffClaimSchema),
-});
-
-const antiforgeryResponseSchema = z.object({
-	requestToken: z.string(),
-});
 
 export const getUserInfoFn = createServerFn({ method: "GET" }).handler(
 	async (): Promise<BffUserResponse | null> => {
@@ -44,8 +35,6 @@ export const getUserInfoFn = createServerFn({ method: "GET" }).handler(
 		return null;
 	},
 );
-
-export type AntiforgeryResponse = z.infer<typeof antiforgeryResponseSchema>;
 
 export const getAntiforgeryTokenFn = createServerFn({ method: "GET" }).handler(
 	async (): Promise<AntiforgeryResponse> => {

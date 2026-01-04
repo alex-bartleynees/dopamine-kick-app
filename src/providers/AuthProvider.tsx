@@ -1,6 +1,6 @@
 import type React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
-import type { UserState } from "@/types/user";
+import type { UserState } from "@/schemas/user";
 import { setCsrfToken } from "../lib/csrf-store";
 import { logoutFn } from "../server/auth";
 

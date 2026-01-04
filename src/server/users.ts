@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { type User, userForCreationSchema, userSchema } from "@/types/user";
+import { type User, userForCreationSchema, userSchema } from "@/schemas/user";
 import { BACKEND_URL, getProxyHeaders } from "../lib/proxy-utils";
 import { csrfMiddleware } from "./middleware/csrf";
 
