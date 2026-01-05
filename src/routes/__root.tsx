@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ReloadPrompt } from "@/components/ReloadPrompt";
 import { getThemeServerFn } from "@/lib/theme";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -82,6 +83,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<ThemeProvider theme={theme}>{children}</ThemeProvider>
+				<ReloadPrompt />
 				<TanStackDevtools
 					config={{
 						position: "bottom-right",
