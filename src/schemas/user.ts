@@ -13,6 +13,7 @@ export const userSchema = z.object({
 	image: z.string(),
 	name: z.string(),
 	username: z.string(),
+	createdAt: z.string(),
 });
 
 export type User = z.infer<typeof userSchema>;

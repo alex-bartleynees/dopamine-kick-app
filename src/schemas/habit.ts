@@ -5,6 +5,9 @@ export const habitSchema = z.object({
 	emoji: z.string(),
 	name: z.string(),
 	target: z.string(),
+	currentStreak: z.number().optional(),
+	longestStreak: z.number().optional(),
+	lastCompletedDate: z.string().nullish(),
 	isCustom: z.boolean().optional(),
 });
 
@@ -43,6 +46,11 @@ export const DEFAULT_HABITS: Habit[] = [
 	{ id: "reading", emoji: "📖", name: "Reading", target: "15 min" },
 	{ id: "sleep", emoji: "😴", name: "Sleep Early", target: "Before 11pm" },
 	{ id: "journaling", emoji: "✍️", name: "Journaling", target: "5 min" },
-	{ id: "healthy-eating", emoji: "🥗", name: "Healthy Eating", target: "3 meals" },
+	{
+		id: "healthy-eating",
+		emoji: "🥗",
+		name: "Healthy Eating",
+		target: "3 meals",
+	},
 	{ id: "stretching", emoji: "🤸", name: "Stretching", target: "10 min" },
 ];

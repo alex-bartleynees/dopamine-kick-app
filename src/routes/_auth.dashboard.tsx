@@ -1,7 +1,8 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Award, Calendar, TrendingUp } from "lucide-react";
+import { Calendar, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ConfettiParticle, HabitProgress } from "@/components/dashboard";
+import type { ConfettiParticle } from "@/components/dashboard";
 import {
 	AllCompleteModal,
 	CelebrationToast,
@@ -10,7 +11,9 @@ import {
 	StatsCard,
 } from "@/components/dashboard";
 import { useAuth } from "@/hooks/useAuth";
-import { getHabitsFn } from "@/server/habits";
+import { getTodayDate, isToday, timezone } from "@/lib/timezone";
+import type { Habit } from "@/schemas/habit";
+import { getHabitsFn, setHabitCompletionFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/dashboard")({
 	loader: async () => {
@@ -21,29 +24,81 @@ export const Route = createFileRoute("/_auth/dashboard")({
 				search: { selectedIds: [], customHabits: [] },
 			});
 		}
-		return { habits };
+		return { initialHabits: habits };
 	},
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const { habits } = Route.useLoaderData();
-	const { user } = useAuth();
-	const [habitProgress, setHabitProgress] = useState<
-		Map<string, HabitProgress>
-	>(
-		() =>
-			new Map(
-				habits.map((h) => [
-					h.id,
-					{
-						habitId: h.id,
-						completed: false,
-						streak: Math.floor(Math.random() * 15),
-					},
-				]),
-			),
-	);
+	const { initialHabits } = Route.useLoaderData();
+	const { user, csrfToken } = useAuth();
+	const queryClient = useQueryClient();
+	const { data: habits = initialHabits } = useQuery({
+		queryKey: ["habits"],
+		queryFn: async () => {
+			return await getHabitsFn();
+		},
+		initialData: initialHabits,
+	});
+	const setHabitCompletedMutation = useMutation({
+		mutationFn: async (data: {
+			habitId: string;
+			csrfToken: string;
+			timezone: string;
+		}) => {
+			return await setHabitCompletionFn({ data });
+		},
+		onMutate: async ({ habitId }) => {
+			await queryClient.cancelQueries({ queryKey: ["habits"] });
+			const previousHabits = queryClient.getQueryData<Habit[]>(["habits"]);
+			queryClient.setQueryData<Habit[]>(["habits"], (oldHabits) => {
+				if (!oldHabits) return oldHabits;
+				return oldHabits.map((habit) => {
+					if (habit.id === habitId) {
+						const newCurrentStreak = (habit.currentStreak ?? 0) + 1;
+						return {
+							...habit,
+							currentStreak: newCurrentStreak,
+							longestStreak: Math.max(
+								habit.longestStreak ?? 0,
+								newCurrentStreak,
+							),
+							lastCompletedDate: getTodayDate(),
+						};
+					}
+					return habit;
+				});
+			});
+			return { previousHabits };
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["habits"] });
+		},
+		onError: (_err, _variables, context) => {
+			if (context?.previousHabits) {
+				queryClient.setQueryData(["habits"], context.previousHabits);
+			}
+		},
+		onSuccess: (habit) => {
+			const streak = habit.currentStreak ?? 0;
+			if (streak > 0 && streak % 7 === 0) {
+				setCelebrationMessage(`🎉 ${streak} day streak on ${habit.name}!`);
+			} else if (streak === 1) {
+				setCelebrationMessage(`Great start on ${habit.name}! 🎯`);
+			} else {
+				setCelebrationMessage(`${habit.name} completed! 🔥`);
+			}
+
+			if (celebrationTimeoutRef.current) {
+				clearTimeout(celebrationTimeoutRef.current);
+			}
+			setShowCelebration(true);
+			celebrationTimeoutRef.current = setTimeout(
+				() => setShowCelebration(false),
+				3000,
+			);
+		},
+	});
 	const [showCelebration, setShowCelebration] = useState(false);
 	const [celebrationMessage, setCelebrationMessage] = useState("");
 	const [showAllCompleteModal, setShowAllCompleteModal] = useState(false);
@@ -54,9 +109,10 @@ function Dashboard() {
 	const celebrationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
+	const prevAllCompletedRef = useRef<boolean | null>(null);
 
-	const completedCount = Array.from(habitProgress.values()).filter(
-		(p) => p.completed,
+	const completedCount = habits.filter((h) =>
+		isToday(h.lastCompletedDate),
 	).length;
 	const totalHabits = habits.length;
 	const completionPercentage =
@@ -65,9 +121,25 @@ function Dashboard() {
 
 	const longestStreak = useMemo(
 		() =>
-			Math.max(...Array.from(habitProgress.values()).map((p) => p.streak), 0),
-		[habitProgress],
+			Math.max(
+				...habits.map((h) => h.longestStreak ?? h.currentStreak ?? 0),
+				0,
+			),
+		[habits],
 	);
+
+	const totalDays = useMemo(() => {
+		const createdAt = user?.currentUser.createdAt;
+		if (!createdAt) return 0;
+
+		const createdDate = new Date(createdAt).toISOString().split("T")[0];
+		const todayDate = getTodayDate();
+		const diffTime =
+			new Date(todayDate).getTime() - new Date(createdDate).getTime();
+		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+		return diffDays + 1;
+	}, [user?.currentUser.createdAt]);
 
 	const today = useMemo(
 		() =>
@@ -75,6 +147,7 @@ function Dashboard() {
 				weekday: "long",
 				month: "long",
 				day: "numeric",
+				timeZone: timezone,
 			}),
 		[],
 	);
@@ -84,7 +157,11 @@ function Dashboard() {
 	}, []);
 
 	useEffect(() => {
-		if (allCompleted) {
+		const wasAllCompleted = prevAllCompletedRef.current;
+		prevAllCompletedRef.current = allCompleted;
+
+		// Only show confetti when transitioning from not-all-complete to all-complete
+		if (allCompleted && wasAllCompleted === false) {
 			const emojis = ["🎉", "✨", "🌟", "🎊", "💫"];
 			const particles = Array.from({ length: 20 }, (_, i) => ({
 				id: i,
@@ -93,8 +170,9 @@ function Dashboard() {
 				duration: 2 + Math.random() * 2,
 				startX: Math.random() * 100,
 			}));
+			setShowAllCompleteModal(true);
 			setConfettiParticles(particles);
-		} else {
+		} else if (!allCompleted) {
 			setConfettiParticles([]);
 		}
 	}, [allCompleted]);
@@ -106,53 +184,6 @@ function Dashboard() {
 			}
 		};
 	}, []);
-
-	const toggleHabit = (habitId: string) => {
-		const newProgress = new Map(habitProgress);
-		const current = newProgress.get(habitId);
-		if (!current) return;
-
-		const wasCompleted = current.completed;
-		const newStreak = wasCompleted ? current.streak : current.streak + 1;
-
-		newProgress.set(habitId, {
-			...current,
-			completed: !wasCompleted,
-			streak: newStreak,
-		});
-
-		setHabitProgress(newProgress);
-
-		const allNowComplete = Array.from(newProgress.values()).every(
-			(p) => p.completed,
-		);
-
-		if (!wasCompleted) {
-			const habit = habits.find((h) => h.id === habitId);
-
-			if (allNowComplete) {
-				setShowAllCompleteModal(true);
-			}
-
-			if (newStreak % 7 === 0) {
-				setCelebrationMessage(
-					`🎉 ${newStreak} day streak on ${habit?.name}! Amazing!`,
-				);
-			} else if (newStreak === 1) {
-				setCelebrationMessage(`Great start on ${habit?.name}! 🎯`);
-			} else {
-				setCelebrationMessage(`${habit?.name} completed! 🔥`);
-			}
-			if (celebrationTimeoutRef.current) {
-				clearTimeout(celebrationTimeoutRef.current);
-			}
-			setShowCelebration(true);
-			celebrationTimeoutRef.current = setTimeout(
-				() => setShowCelebration(false),
-				3000,
-			);
-		}
-	};
 
 	return (
 		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900">
@@ -193,17 +224,19 @@ function Dashboard() {
 				{/* Habits List */}
 				<div className="space-y-4 mb-8">
 					{habits.map((habit, index) => {
-						const progress = habitProgress.get(habit.id);
-						if (!progress) return null;
-
 						return (
 							<HabitCard
 								key={habit.id}
 								habit={habit}
-								progress={progress}
 								mounted={mounted}
 								index={index}
-								onToggle={toggleHabit}
+								onToggle={(habitId: string) => {
+									setHabitCompletedMutation.mutate({
+										habitId,
+										csrfToken,
+										timezone,
+									});
+								}}
 							/>
 						);
 					})}
@@ -227,19 +260,9 @@ function Dashboard() {
 						}
 						iconBgColor="bg-purple-100 dark:bg-purple-900/50"
 						label="Total Days"
-						value={7}
+						value={totalDays}
 						mounted={mounted}
 						delay="500ms"
-					/>
-					<StatsCard
-						icon={
-							<Award className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-						}
-						iconBgColor="bg-yellow-100 dark:bg-yellow-900/50"
-						label="Achievements"
-						value={3}
-						mounted={mounted}
-						delay="600ms"
 					/>
 				</div>
 			</div>

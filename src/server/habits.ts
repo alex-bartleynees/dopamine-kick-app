@@ -64,3 +64,45 @@ export const bulkCreateHabitsFn = createServerFn({ method: "POST" })
 
 		throw new Error("Failed to create habits");
 	});
+
+export const setHabitCompletionFn = createServerFn({ method: "POST" })
+	.inputValidator((d: { habitId: string; csrfToken: string; timezone: string }) =>
+		z
+			.object({
+				habitId: z.string(),
+				csrfToken: z.string(),
+				timezone: z.string(),
+			})
+			.parse(d),
+	)
+	.handler(
+		async ({
+			data,
+		}: {
+			data: { habitId: string; csrfToken: string; timezone: string };
+		}): Promise<Habit> => {
+			const request = getRequest();
+			const response = await fetch(
+				`${BACKEND_URL}/api/habits/${data.habitId}/completions`,
+				{
+					method: "POST",
+					headers: {
+						...getProxyHeaders(request),
+						"Content-Type": "application/json",
+						"X-CSRF-TOKEN": data.csrfToken,
+					},
+					body: JSON.stringify({
+						habitId: data.habitId,
+						timezone: data.timezone,
+					}),
+				},
+			);
+
+			if (response.ok) {
+				const result = await response.json();
+				return habitSchema.parse(result);
+			}
+
+			throw new Error("Failed to set habit completion");
+		},
+	);

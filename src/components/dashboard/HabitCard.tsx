@@ -1,27 +1,20 @@
 import { Check, Flame } from "lucide-react";
+import { isToday } from "@/lib/timezone";
 import type { Habit } from "@/schemas/habit";
-
-export interface HabitProgress {
-	habitId: string;
-	completed: boolean;
-	streak: number;
-}
 
 interface HabitCardProps {
 	habit: Habit;
-	progress: HabitProgress;
 	mounted: boolean;
 	index: number;
 	onToggle: (habitId: string) => void;
 }
 
-export function HabitCard({
-	habit,
-	progress,
-	mounted,
-	index,
-	onToggle,
-}: HabitCardProps) {
+export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
+	const completedToday = isToday(habit.lastCompletedDate);
+	const progress = {
+		completed: completedToday,
+		streak: habit.currentStreak ?? 0,
+	};
 	return (
 		<div
 			className={`transition-[opacity,transform] duration-500 ${
@@ -32,6 +25,7 @@ export function HabitCard({
 			<button
 				type="button"
 				onClick={() => onToggle(habit.id)}
+				disabled={completedToday}
 				className={`w-full bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border-2 ${
 					progress.completed
 						? "border-purple-400 dark:border-purple-500"
