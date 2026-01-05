@@ -39,6 +39,8 @@ function Dashboard() {
 			return await getHabitsFn();
 		},
 		initialData: initialHabits,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
 	});
 	const setHabitCompletedMutation = useMutation({
 		mutationFn: async (data: {
@@ -143,7 +145,7 @@ function Dashboard() {
 
 	const today = useMemo(
 		() =>
-			new Date().toLocaleDateString("en-US", {
+			new Date().toLocaleDateString(undefined, {
 				weekday: "long",
 				month: "long",
 				day: "numeric",
@@ -243,7 +245,7 @@ function Dashboard() {
 				</div>
 
 				{/* Stats Cards */}
-				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<StatsCard
 						icon={
 							<TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
