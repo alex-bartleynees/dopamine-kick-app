@@ -34,10 +34,19 @@ export const bulkHabitsForCreationSchema = z.object({
 	habits: z.array(habitForCreationSchema),
 });
 
+export const habitReminderForCreationSchema = z.object({
+	habitId: z.string(),
+	notificationTime: z.string(), // TimeOnly as HH:mm string
+	timezone: z.string(),
+	preferredTime: z.string(),
+	isEnabled: z.boolean(),
+});
+
 export type Habit = z.infer<typeof habitSchema>;
 export type HabitForCreation = z.infer<typeof habitForCreationSchema>;
 export type CustomHabit = z.infer<typeof customHabitSchema>;
 export type HabitSearchParams = z.infer<typeof habitSearchSchema>;
+export type HabitReminderForCreation = z.infer<typeof habitReminderForCreationSchema>;
 
 export const DEFAULT_HABITS: Habit[] = [
 	{ id: "exercise", emoji: "🏃", name: "Exercise", target: "20 min" },

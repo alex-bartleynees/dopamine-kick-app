@@ -1,6 +1,7 @@
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Bell, ChevronLeft } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
 	Select,
 	SelectContent,
@@ -8,14 +9,25 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
 import {
-	DEFAULT_HABITS,
-	type Habit,
+	type HabitReminderForCreation,
 	type HabitSearchParams,
 	habitSearchSchema,
 } from "@/schemas/habit";
+import { bulkCreateHabitRemindersFn, getHabitsFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/set-tempo")({
+	loader: async () => {
+		const habits = await getHabitsFn();
+		if (habits.length === 0) {
+			throw redirect({
+				to: "/choose-habits",
+				search: { selectedIds: [], customHabits: [] },
+			});
+		}
+		return { habits };
+	},
 	component: RouteComponent,
 	validateSearch: (search: Record<string, unknown>): HabitSearchParams => {
 		const result = habitSearchSchema.safeParse(search);
@@ -23,16 +35,6 @@ export const Route = createFileRoute("/_auth/set-tempo")({
 			return result.data;
 		}
 		return { selectedIds: [], customHabits: [] };
-	},
-	beforeLoad: ({ search }) => {
-		const hasHabits =
-			search.selectedIds.length > 0 || search.customHabits.length > 0;
-		if (!hasHabits) {
-			throw redirect({
-				to: "/choose-habits",
-				search: { selectedIds: [], customHabits: [] },
-			});
-		}
 	},
 });
 
@@ -71,28 +73,31 @@ const REMINDER_TIME_OPTIONS = [
 ];
 
 function RouteComponent() {
+	const { habits } = Route.useLoaderData();
 	const search = Route.useSearch();
 	const navigate = useNavigate();
-
-	const habits = useMemo((): Habit[] => {
-		const result: Habit[] = [];
-		for (const id of search.selectedIds) {
-			const habit = DEFAULT_HABITS.find((h) => h.id === id);
-			if (habit) {
-				result.push(habit);
-			}
-		}
-		for (const customHabit of search.customHabits) {
-			result.push(customHabit);
-		}
-		return result;
-	}, [search.selectedIds, search.customHabits]);
+	const { csrfToken } = useAuth();
 
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [preferences, setPreferences] = useState<Record<string, Preference>>(
 		{},
 	);
 	const [animationKey, setAnimationKey] = useState(0);
+
+	const createRemindersMutation = useMutation({
+		mutationFn: async (reminders: HabitReminderForCreation[]) => {
+			return await bulkCreateHabitRemindersFn({
+				data: { reminders, csrfToken },
+			});
+		},
+		onSuccess: () => {
+			navigate({ to: "/dashboard" });
+		},
+		onError: (error) => {
+			console.error("Failed to create reminders:", error);
+			// TODO: Show error toast/message to user
+		},
+	});
 
 	const currentHabit = habits.length > 0 ? habits[currentIndex] : null;
 	const currentPreference = preferences[currentHabit?.id ?? ""] || {
@@ -128,10 +133,16 @@ function RouteComponent() {
 	const handleNext = () => {
 		if (canProceed) {
 			if (isLastHabit) {
-				console.log("Done!", preferences);
-				navigate({
-					to: "/dashboard",
-				});
+				const habitRemindersToCreate = Object.entries(preferences).map(
+					([habitId, pref]) => ({
+						habitId,
+						notificationTime: pref.reminderTime,
+						timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+						preferredTime: pref.timePreference ?? "",
+						isEnabled: pref.reminderEnabled,
+					}),
+				);
+				createRemindersMutation.mutate(habitRemindersToCreate);
 			} else {
 				setAnimationKey((k) => k + 1);
 				setCurrentIndex((i) => i + 1);
@@ -294,9 +305,9 @@ function RouteComponent() {
 					<button
 						type="button"
 						onClick={handleNext}
-						disabled={!canProceed}
+						disabled={!canProceed || createRemindersMutation.isPending}
 						className={`w-full mt-6 py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 opacity-0 animate-fade-in-up ${
-							canProceed
+							canProceed && !createRemindersMutation.isPending
 								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
 								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 						}`}

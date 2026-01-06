@@ -4,7 +4,9 @@ import { z } from "zod";
 import {
 	type Habit,
 	type HabitForCreation,
+	type HabitReminderForCreation,
 	habitSchema,
+	habitReminderForCreationSchema,
 } from "@/schemas/habit";
 import { BACKEND_URL, getProxyHeaders } from "../lib/proxy-utils";
 
@@ -104,5 +106,65 @@ export const setHabitCompletionFn = createServerFn({ method: "POST" })
 			}
 
 			throw new Error("Failed to set habit completion");
+		},
+	);
+
+type CreateHabitReminderInput = HabitReminderForCreation & { csrfToken: string };
+
+export const createHabitReminderFn = createServerFn({ method: "POST" })
+	.inputValidator((d: CreateHabitReminderInput) =>
+		habitReminderForCreationSchema.extend({ csrfToken: z.string() }).parse(d),
+	)
+	.handler(async ({ data }: { data: CreateHabitReminderInput }): Promise<void> => {
+		const request = getRequest();
+		const { csrfToken, ...reminderData } = data;
+		const response = await fetch(
+			`${BACKEND_URL}/api/habits/${data.habitId}/reminders`,
+			{
+				method: "POST",
+				headers: {
+					...getProxyHeaders(request),
+					"Content-Type": "application/json",
+					"X-CSRF-TOKEN": csrfToken,
+				},
+				body: JSON.stringify(reminderData),
+			},
+		);
+
+		if (!response.ok) {
+			throw new Error("Failed to create habit reminder");
+		}
+	});
+
+const bulkCreateRemindersInputSchema = z.object({
+	reminders: z.array(habitReminderForCreationSchema),
+	csrfToken: z.string(),
+});
+
+type BulkCreateRemindersInput = {
+	reminders: HabitReminderForCreation[];
+	csrfToken: string;
+};
+
+export const bulkCreateHabitRemindersFn = createServerFn({ method: "POST" })
+	.inputValidator((d: BulkCreateRemindersInput) =>
+		bulkCreateRemindersInputSchema.parse(d),
+	)
+	.handler(
+		async ({ data }: { data: BulkCreateRemindersInput }): Promise<void> => {
+			const request = getRequest();
+			const response = await fetch(`${BACKEND_URL}/api/habits/reminders/bulk`, {
+				method: "POST",
+				headers: {
+					...getProxyHeaders(request),
+					"Content-Type": "application/json",
+					"X-CSRF-TOKEN": data.csrfToken,
+				},
+				body: JSON.stringify({ reminders: data.reminders }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to create habit reminders");
+			}
 		},
 	);
