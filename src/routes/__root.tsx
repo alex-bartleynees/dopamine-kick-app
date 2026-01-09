@@ -24,14 +24,24 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-	beforeLoad: async () => {
-		const authState = await getAuthenticatedStateFn();
-		if (!authState) {
-			return { userState: null, csrfToken: "" };
-		}
-		return authState;
-	},
-	loader: () => getThemeServerFn(),
+	beforeLoad: async ({ context: { queryClient } }) =>
+		queryClient.ensureQueryData({
+			queryKey: ["authState"],
+			queryFn: async () => {
+				const authState = await getAuthenticatedStateFn();
+				if (!authState) {
+					return { userState: null, csrfToken: "" };
+				}
+				return authState;
+			},
+			staleTime: 5 * 60 * 1000, // 5 minutes
+		}),
+	loader: async ({ context: { queryClient } }) =>
+		queryClient.ensureQueryData({
+			queryKey: ["theme"],
+			queryFn: () => getThemeServerFn(),
+			staleTime: Number.POSITIVE_INFINITY, // Never refetch automatically
+		}),
 	head: () => ({
 		meta: [
 			{

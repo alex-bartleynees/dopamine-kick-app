@@ -1,4 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, use, type PropsWithChildren } from "react";
 import { setThemeServerFn, type Theme } from "@/lib/theme";
 
@@ -14,9 +15,13 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children, theme }: ThemeProviderProps) {
 	const router = useRouter();
+	const queryClient = useQueryClient();
 
 	function setTheme(value: Theme) {
-		setThemeServerFn({ data: value }).then(() => router.invalidate());
+		queryClient.setQueryData(["theme"], value);
+		setThemeServerFn({ data: value }).then(() => {
+			router.invalidate();
+		});
 	}
 
 	function toggleTheme() {
