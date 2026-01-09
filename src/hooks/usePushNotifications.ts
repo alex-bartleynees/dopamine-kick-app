@@ -97,22 +97,17 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
 		try {
 			const registration = await navigator.serviceWorker.ready;
+			let subscription = await registration.pushManager.getSubscription();
 
-			// Check if already subscribed
-			const existingSubscription =
-				await registration.pushManager.getSubscription();
-			if (existingSubscription) {
-				setState((prev) => ({ ...prev, isSubscribed: true }));
-				return;
+			if (!subscription) {
+				const { publicKey } = await getVapidPublicKeyFn();
+				const applicationServerKey = urlBase64ToArrayBuffer(publicKey);
+
+				subscription = await registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey,
+				});
 			}
-
-			const { publicKey } = await getVapidPublicKeyFn();
-			const applicationServerKey = urlBase64ToUint8Array(publicKey);
-
-			const subscription = await registration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey,
-			});
 
 			const subscriptionJson = subscription.toJSON();
 
@@ -171,8 +166,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 	};
 }
 
-// Helper function to convert base64 VAPID key to Uint8Array
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+// Helper function to convert base64 VAPID key to ArrayBuffer
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
 
@@ -183,5 +178,5 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 		outputArray[i] = rawData.charCodeAt(i);
 	}
 
-	return outputArray;
+	return outputArray.buffer;
 }
