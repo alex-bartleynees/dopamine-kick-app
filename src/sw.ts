@@ -71,3 +71,55 @@ registerRoute(
     ],
   })
 );
+
+// Push notification event listener
+self.addEventListener('push', (event: PushEvent) => {
+  if (!event.data) {
+    return;
+  }
+
+  try {
+    const payload = event.data.json();
+    const { title, body, icon, badge, data } = payload;
+
+    const options: NotificationOptions = {
+      body: body || 'Time for your habit!',
+      icon: icon || '/logo192.png',
+      badge: badge || '/logo192.png',
+      data: data || {},
+      vibrate: [200, 100, 200],
+      tag: data?.habitId || 'habit-reminder',
+      requireInteraction: false,
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(title || 'Habit Reminder', options)
+    );
+  } catch (error) {
+    console.error('Error handling push event:', error);
+  }
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/dashboard';
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Check if a window is already open
+        for (const client of clientList) {
+          if (client.url.includes(urlToOpen) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Open new window if none found
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});

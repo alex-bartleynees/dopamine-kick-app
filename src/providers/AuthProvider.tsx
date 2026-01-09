@@ -1,7 +1,7 @@
 import type React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
 import type { UserState } from "@/schemas/user";
-import { setCsrfToken } from "../lib/csrf-store";
+import { setCsrfToken, clearCsrfToken } from "../lib/csrf-store";
 import { logoutFn } from "../server/auth";
 
 interface AuthContextType {
@@ -32,6 +32,7 @@ export function AuthProvider({
 	const logout = useCallback(async () => {
 		try {
 			await logoutFn({ data: antiForgeryToken });
+			clearCsrfToken();
 			setUser(null);
 			window.location.href = "/";
 		} catch (error) {
@@ -42,8 +43,16 @@ export function AuthProvider({
 	useEffect(() => {
 		if (csrfToken) {
 			setCsrfToken(csrfToken);
+		} else {
+			clearCsrfToken();
 		}
 	}, [csrfToken]);
+
+	useEffect(() => {
+		if (!userState?.isAuthenticated) {
+			clearCsrfToken();
+		}
+	}, [userState]);
 
 	const value: AuthContextType = {
 		user,

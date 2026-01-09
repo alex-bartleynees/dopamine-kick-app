@@ -7,3 +7,7 @@ export function setCsrfToken(token: string) {
 export function getCsrfToken() {
 	return csrfToken;
 }
+
+export function clearCsrfToken() {
+	csrfToken = "";
+}

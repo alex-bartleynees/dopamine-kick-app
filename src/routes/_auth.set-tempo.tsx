@@ -10,6 +10,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
 	type HabitReminderForCreation,
 	type HabitSearchParams,
@@ -77,12 +78,16 @@ function RouteComponent() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const { csrfToken } = useAuth();
+	const { requestPermission, subscribe, isSupported, permission } =
+		usePushNotifications();
 
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [preferences, setPreferences] = useState<Record<string, Preference>>(
 		{},
 	);
 	const [animationKey, setAnimationKey] = useState(0);
+	const [hasPromptedForNotifications, setHasPromptedForNotifications] =
+		useState(false);
 
 	const createRemindersMutation = useMutation({
 		mutationFn: async (reminders: HabitReminderForCreation[]) => {
@@ -130,22 +135,52 @@ function RouteComponent() {
 		}
 	};
 
-	const handleNext = () => {
-		if (canProceed) {
-			if (isLastHabit) {
-				const habitRemindersToCreate = Object.entries(preferences).map(
-					([habitId, pref]) => ({
-						habitId,
-						notificationTime: pref.reminderTime,
-						timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-						preferredTime: pref.timePreference ?? "",
-						isEnabled: pref.reminderEnabled,
-					}),
-				);
-				createRemindersMutation.mutate(habitRemindersToCreate);
-			} else {
-				setAnimationKey((k) => k + 1);
-				setCurrentIndex((i) => i + 1);
+	const handleNext = async () => {
+		if (!canProceed) {
+			return;
+		}
+
+		if (!isLastHabit) {
+			setAnimationKey((k) => k + 1);
+			setCurrentIndex((i) => i + 1);
+			return;
+		}
+
+		await setupPushNotificationsIfNeeded();
+
+		// Create habit reminders
+		const habitRemindersToCreate = Object.entries(preferences).map(
+			([habitId, pref]) => ({
+				habitId,
+				notificationTime: pref.reminderTime,
+				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+				preferredTime: pref.timePreference ?? "",
+				isEnabled: pref.reminderEnabled,
+			}),
+		);
+		createRemindersMutation.mutate(habitRemindersToCreate);
+	};
+
+	const setupPushNotificationsIfNeeded = async () => {
+		const hasAnyRemindersEnabled = Object.values(preferences).some(
+			(pref) => pref.reminderEnabled,
+		);
+
+		if (!hasAnyRemindersEnabled || !isSupported) {
+			return;
+		}
+
+		if (permission === "granted") {
+			await subscribe();
+			return;
+		}
+
+		if (!hasPromptedForNotifications) {
+			setHasPromptedForNotifications(true);
+			const granted = await requestPermission();
+
+			if (granted) {
+				await subscribe();
 			}
 		}
 	};
@@ -312,7 +347,11 @@ function RouteComponent() {
 								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 						}`}
 					>
-						{isLastHabit ? "Done" : "Next"}
+						{createRemindersMutation.isPending
+							? "Setting up..."
+							: isLastHabit
+								? "Done"
+								: "Next"}
 					</button>
 				</div>
 			</div>

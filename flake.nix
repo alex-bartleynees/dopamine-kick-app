@@ -17,6 +17,7 @@
             nodejs_24
             biome
             pnpm
+            bun
             nodePackages.typescript
             nodePackages.typescript-language-server
           ];
@@ -25,6 +26,7 @@
             echo "Dopamine Kick App dev environment"
             echo "Node: $(node --version)"
             echo "pnpm: $(pnpm --version)"
+            echo "bun: $(bun --version)"
           '';
         };
       }
