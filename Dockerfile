@@ -17,6 +17,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+ENV NODE_ENV=production
+
 # Build TanStack Start app (outputs to .output/)
 RUN bun run build
 
