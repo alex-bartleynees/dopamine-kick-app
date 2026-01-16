@@ -10,23 +10,85 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        # Helper to create landrun-wrapped version of a package
+        wrapWithLandrun = { pkg, binName, extraArgs ? "" }:
+          pkgs.writeShellScriptBin binName ''
+            exec ${pkgs.landrun}/bin/landrun \
+              --rox /nix/store \
+              --rwx "$PWD" \
+              --ro /etc \
+              --ro /run/current-system \
+              ${extraArgs} \
+              ${pkg}/bin/${binName} "$@"
+          '';
+
+        # Sandboxed versions of development tools
+        sandboxed-node = wrapWithLandrun {
+          pkg = pkgs.nodejs_24;
+          binName = "node";
+          extraArgs = "--unrestricted-network"; # Dev server needs this
+        };
+
+        sandboxed-pnpm = wrapWithLandrun {
+          pkg = pkgs.pnpm;
+          binName = "pnpm";
+          extraArgs = "--rw ~/.pnpm-store --connect-tcp 443 --connect-tcp 80";
+        };
+
+        sandboxed-bun = wrapWithLandrun {
+          pkg = pkgs.bun;
+          binName = "bun";
+          extraArgs = "--rw ~/.bun --connect-tcp 443 --connect-tcp 80";
+        };
+
+        sandboxed-biome = wrapWithLandrun {
+          pkg = pkgs.biome;
+          binName = "biome";
+          extraArgs = ""; # No network flags = network blocked
+        };
+
+        sandboxed-tsc = wrapWithLandrun {
+          pkg = pkgs.nodePackages.typescript;
+          binName = "tsc";
+          extraArgs = ""; # No network flags = network blocked
+        };
       in
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nodejs_24
-            biome
-            pnpm
-            bun
-            nodePackages.typescript
+            landrun
+            # Sandboxed tools
+            sandboxed-node
+            sandboxed-pnpm
+            sandboxed-bun
+            sandboxed-biome
+            sandboxed-tsc
             nodePackages.typescript-language-server
           ];
 
           shellHook = ''
-            echo "Dopamine Kick App dev environment"
-            echo "Node: $(node --version)"
-            echo "pnpm: $(pnpm --version)"
-            echo "bun: $(bun --version)"
+            # Create cache directories if they don't exist (landrun requires them)
+            mkdir -p ~/.pnpm-store
+            mkdir -p ~/.bun
+
+            echo "🧠 Dopamine Kick App dev environment (sandboxed)"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📁 Project: $PWD"
+            echo "🟢 Node: $(node --version)"
+            echo "📦 pnpm: $(pnpm --version)"
+            echo "🍞 bun: $(bun --version)"
+            echo ""
+            echo "🔒 Landrun sandboxing active:"
+            echo "   ✓ Read/write/exec: \$PWD"
+            echo "   ✓ Read/exec: /nix/store"
+            echo "   ✓ Network: restricted by tool"
+            echo ""
+            echo "💡 Network restrictions:"
+            echo "   • pnpm/bun: HTTPS/HTTP only (ports 443/80)"
+            echo "   • node: unrestricted (for dev server)"
+            echo "   • biome/tsc: network blocked"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           '';
         };
       }
