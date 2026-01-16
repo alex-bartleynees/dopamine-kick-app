@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dopamine-kick-app.fullname" . }}
+  namespace: {{ include "dopamine-kick-app.namespace" . }}
+  labels:
+    {{- include "dopamine-kick-app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "dopamine-kick-app.selectorLabels" . | nindent 4 }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: http
