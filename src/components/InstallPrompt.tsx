@@ -78,7 +78,7 @@ export function InstallPrompt() {
 	if (!isIOS && !deferredPrompt) return null;
 
 	return (
-		<div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-full mx-4 animate-slide-up">
+		<div className="fixed bottom-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 sm:max-w-2xl sm:w-full animate-slide-up">
 			<div className="rounded-lg border border-border bg-card px-4 py-3 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
 				<div className="flex-1">
 					{isIOS ? (
