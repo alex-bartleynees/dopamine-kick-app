@@ -49,7 +49,7 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
   hosts:
-    - host: app.dopamine-kick.alexbartleynees.com
+    - host: app.dopamine-kick.com
       paths:
         - path: /
           pathType: Prefix
