@@ -5,7 +5,7 @@ replicaCount: 1
 image:
   repository: creativefree/dopamine-kick-app
   pullPolicy: Always
-  tag: "80d499d"
+  tag: "c3c1061"
 
 # Container port the application listens on
 containerPort: 3000
