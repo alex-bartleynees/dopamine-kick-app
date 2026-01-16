@@ -44,7 +44,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: BFF_API_URL
+            - name: BACKEND_URL
               value: {{ .Values.bffApiUrl | quote }}
           ports:
             - name: http
