@@ -48,7 +48,6 @@ async function generateServiceWorker() {
       globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
       globIgnores: ['sw-src.js', 'sw.js'],
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-      mode: 'production',
     });
 
     unlinkSync(tempSwPath);
