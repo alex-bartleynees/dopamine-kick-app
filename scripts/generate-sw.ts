@@ -23,8 +23,11 @@ async function generateServiceWorker() {
       format: 'esm',
       target: 'es2020',
       bundle: true,
-      minify: false,
+      minify: true,
       write: false,
+      define: {
+        'process.env.NODE_ENV': '"production"',
+      },
     });
 
     if (result.errors.length > 0) {
@@ -45,6 +48,7 @@ async function generateServiceWorker() {
       globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
       globIgnores: ['sw-src.js', 'sw.js'],
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+      mode: 'production',
     });
 
     unlinkSync(tempSwPath);
