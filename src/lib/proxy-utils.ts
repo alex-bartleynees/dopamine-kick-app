@@ -27,7 +27,10 @@ export function getProxyHeaders(request: Request): Record<string, string> {
 
 	headers.host = new URL(BACKEND_URL).host;
 	headers["x-forwarded-host"] = request.headers.get("host") || "";
-	headers["x-forwarded-proto"] = new URL(request.url).protocol.slice(0, -1);
+	// Preserve x-forwarded-proto from ingress if it exists, otherwise use current protocol
+	headers["x-forwarded-proto"] =
+		request.headers.get("x-forwarded-proto") ||
+		new URL(request.url).protocol.slice(0, -1);
 	headers["x-forwarded-for"] =
 		request.headers.get("x-forwarded-for") ||
 		request.headers.get("x-real-ip") ||
