@@ -39,7 +39,6 @@ function Dashboard() {
 			return await getHabitsFn();
 		},
 		initialData: initialHabits,
-		refetchOnWindowFocus: false,
 		refetchOnMount: false,
 	});
 	const setHabitCompletedMutation = useMutation({

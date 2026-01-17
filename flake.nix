@@ -24,11 +24,16 @@
           '';
 
         # Sandboxed versions of development tools
-        sandboxed-node = wrapWithLandrun {
-          pkg = pkgs.nodejs_24;
-          binName = "node";
-          extraArgs = "--unrestricted-network"; # Dev server needs this
-        };
+        sandboxed-node = pkgs.writeShellScriptBin "node" ''
+          exec ${pkgs.landrun}/bin/landrun \
+            --rox /nix/store \
+            --rwx "$PWD" \
+            --ro /etc \
+            --ro /run/current-system \
+            --rw /tmp \
+            --unrestricted-network \
+            ${pkgs.nodejs_24}/bin/node "$@"
+        '';
 
         sandboxed-pnpm = wrapWithLandrun {
           pkg = pkgs.pnpm;
