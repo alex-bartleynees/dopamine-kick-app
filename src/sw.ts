@@ -26,9 +26,9 @@ registerRoute(
   )
 );
 
-// API requests: NetworkFirst with timeout
+// API requests: NetworkFirst with timeout (exclude auth endpoints)
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/bff/'),
+  ({ url }) => url.pathname.startsWith('/api/') && !url.pathname.startsWith('/bff/'),
   new NetworkFirst({
     cacheName: 'api-cache',
     networkTimeoutSeconds: 3,

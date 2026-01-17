@@ -18,7 +18,6 @@ export function getProxyHeaders(request: Request): Record<string, string> {
 				"connection",
 				"transfer-encoding",
 				"content-length",
-				"content-type",
 			].includes(key.toLowerCase())
 		) {
 			headers[key] = value;
