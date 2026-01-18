@@ -7,14 +7,14 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { ReloadPrompt } from "@/components/ReloadPrompt";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ReloadPrompt } from "@/components/ReloadPrompt";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getThemeServerFn } from "@/lib/theme";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { getAuthenticatedStateFn } from "@/server/auth";
 import type { UserState } from "@/schemas/user";
+import { getAuthenticatedStateFn } from "@/server/auth";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles/index.css?url";
 
@@ -35,7 +35,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				}
 				return authState;
 			},
-			staleTime: 5 * 60 * 1000, // 5 minutes
+			staleTime: Number.POSITIVE_INFINITY, // Never refetch automatically
 		}),
 	loader: async ({ context: { queryClient } }) =>
 		queryClient.ensureQueryData({
