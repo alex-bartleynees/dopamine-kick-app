@@ -102,7 +102,7 @@ export const setHabitCompletionFn = createServerFn({ method: "POST" })
 
 			if (response.ok) {
 				const result = await response.json();
-				return habitSchema.parse(result);
+				return habitSchema.parse(result.habit);
 			}
 
 			throw new Error("Failed to set habit completion");

@@ -72,9 +72,6 @@ function Dashboard() {
 			});
 			return { previousHabits };
 		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["habits"] });
-		},
 		onError: (_err, _variables, context) => {
 			if (context?.previousHabits) {
 				queryClient.setQueryData(["habits"], context.previousHabits);
@@ -98,6 +95,11 @@ function Dashboard() {
 				() => setShowCelebration(false),
 				3000,
 			);
+
+			queryClient.setQueryData<Habit[]>(["habits"], (oldHabits) => {
+				if (!oldHabits) return oldHabits;
+				return oldHabits.map((h) => (h.id === habit.id ? habit : h));
+			});
 		},
 	});
 	const [showCelebration, setShowCelebration] = useState(false);
