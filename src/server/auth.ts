@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import {
 	type AntiforgeryResponse,
-	type BffUserResponse,
 	antiforgeryResponseSchema,
+	type BffUserResponse,
 	bffUserResponseSchema,
 	getClaimValue,
 } from "@/schemas/auth";
@@ -95,6 +95,9 @@ export const getAuthenticatedStateFn = createServerFn({
 			throw new Error("User is missing 'sub' claim");
 		}
 		const currentUser = await getCurrentUserFn({ data: sub });
+		if (currentUser.id !== sub) {
+			throw new Error("Current user ID does not match 'sub' claim");
+		}
 		const csrfToken = await getAntiforgeryTokenFn();
 		return {
 			userState: { isAuthenticated: true, currentUser },

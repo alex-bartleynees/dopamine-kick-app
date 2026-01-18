@@ -3,6 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
 	component: App,
+	beforeLoad: async () => {
+		const { user } = useAuth();
+		if (user?.isAuthenticated && user.currentUser.id) {
+			return { redirectTo: "/_auth/dashboard" };
+		}
+		return null;
+	},
 });
 
 function App() {
