@@ -1,14 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
 	component: App,
-	beforeLoad: async () => {
-		const { user } = useAuth();
-		if (user?.isAuthenticated && user.currentUser.id) {
-			return { redirectTo: "/_auth/dashboard" };
+	beforeLoad: async ({ context }) => {
+		if (
+			context?.userState?.isAuthenticated &&
+			context.userState.currentUser?.id
+		) {
+			throw redirect({ to: "/dashboard" });
 		}
-		return null;
 	},
 });
 
