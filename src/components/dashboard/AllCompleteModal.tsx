@@ -13,24 +13,22 @@ export function AllCompleteModal({ userName, onClose }: AllCompleteModalProps) {
 	}, []);
 
 	return (
-		<button
-			type="button"
-			className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50 animate-fade-in w-full cursor-default"
-			onClick={onClose}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					onClose();
-				}
-			}}
+		<div
+			role="dialog"
+			aria-modal="true"
+			className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50 animate-fade-in"
 		>
+			{/* Backdrop - click to close */}
+			<button
+				type="button"
+				className="absolute inset-0 bg-transparent cursor-default border-none"
+				onClick={onClose}
+				aria-label="Close modal"
+			/>
 			<div
 				ref={dialogRef}
-				role="dialog"
-				aria-modal="true"
 				tabIndex={-1}
-				onClick={(e) => e.stopPropagation()}
-				onKeyDown={(e) => e.stopPropagation()}
-				className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center relative overflow-hidden animate-modal-enter"
+				className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center overflow-hidden animate-modal-enter"
 			>
 				<div className="absolute inset-0 bg-linear-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-pink-500/20" />
 
@@ -64,6 +62,6 @@ export function AllCompleteModal({ userName, onClose }: AllCompleteModalProps) {
 					</button>
 				</div>
 			</div>
-		</button>
+		</div>
 	);
 }

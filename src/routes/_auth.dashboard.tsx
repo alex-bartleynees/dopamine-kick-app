@@ -191,7 +191,7 @@ function Dashboard() {
 	return (
 		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900">
 			{/* Header */}
-			<div className="bg-white dark:bg-gray-800 shadow-sm">
+			<header className="bg-white dark:bg-gray-800 shadow-sm">
 				<div className="max-w-4xl mx-auto px-6 py-6">
 					<div className="flex items-center justify-between">
 						<div>
@@ -220,10 +220,10 @@ function Dashboard() {
 						</div>
 					</div>
 				</div>
-			</div>
+			</header>
 
 			{/* Main Content */}
-			<div className="max-w-4xl mx-auto px-2 sm:px-6 py-8">
+			<section className="max-w-4xl mx-auto px-2 sm:px-6 py-8">
 				{/* Habits List */}
 				<div className="space-y-4 mb-8">
 					{habits.map((habit, index) => {
@@ -268,7 +268,7 @@ function Dashboard() {
 						delay="500ms"
 					/>
 				</div>
-			</div>
+			</section>
 
 			{showCelebration && <CelebrationToast message={celebrationMessage} />}
 
