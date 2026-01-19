@@ -32,7 +32,7 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 						: "border-transparent dark:border-gray-700"
 				}`}
 			>
-				<div className="flex items-center gap-4">
+				<div className="flex items-center gap-4 flex-wrap">
 					<div
 						className={`relative shrink-0 w-12 h-12 rounded-xl border-2 transition-[border-color,background-color] duration-300 ${
 							progress.completed
