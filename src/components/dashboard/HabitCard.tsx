@@ -51,7 +51,7 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 						<div className="flex items-center gap-2 mb-1">
 							<span className="text-2xl">{habit.emoji}</span>
 							<span
-								className={`font-medium transition-[color,text-decoration] duration-300 ${
+								className={`font-medium transition-[color,text-decoration] duration-300 min-w-20 ${
 									progress.completed
 										? "line-through text-gray-400 dark:text-gray-500"
 										: "dark:text-gray-200"
