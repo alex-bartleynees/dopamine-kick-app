@@ -11,26 +11,27 @@ import {
 	StatsCard,
 } from "@/components/dashboard";
 import { useAuth } from "@/hooks/useAuth";
+import { getLocaleFn } from "@/lib/locale";
 import { getTodayDate, isToday, timezone } from "@/lib/timezone";
 import type { Habit } from "@/schemas/habit";
 import { getHabitsFn, setHabitCompletionFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/dashboard")({
 	loader: async () => {
-		const habits = await getHabitsFn();
+		const [habits, locale] = await Promise.all([getHabitsFn(), getLocaleFn()]);
 		if (habits.length === 0) {
 			throw redirect({
 				to: "/choose-habits",
 				search: { selectedIds: [], customHabits: [] },
 			});
 		}
-		return { initialHabits: habits };
+		return { initialHabits: habits, locale };
 	},
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const { initialHabits } = Route.useLoaderData();
+	const { initialHabits, locale } = Route.useLoaderData();
 	const { user, csrfToken } = useAuth();
 	const queryClient = useQueryClient();
 	const { data: habits = initialHabits } = useQuery({
@@ -146,13 +147,13 @@ function Dashboard() {
 
 	const today = useMemo(
 		() =>
-			new Date().toLocaleDateString(undefined, {
+			new Date().toLocaleDateString(locale, {
 				weekday: "long",
 				month: "long",
 				day: "numeric",
 				timeZone: timezone,
 			}),
-		[],
+		[locale],
 	);
 
 	useEffect(() => {
