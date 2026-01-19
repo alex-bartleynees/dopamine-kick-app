@@ -1,6 +1,6 @@
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { createContext, use, type PropsWithChildren } from "react";
+import { createContext, use, useEffect, type PropsWithChildren } from "react";
 import { setThemeServerFn, type Theme } from "@/lib/theme";
 
 type ThemeContextValue = {
@@ -16,6 +16,15 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children, theme }: ThemeProviderProps) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
+
+	useEffect(() => {
+		// Sync React state with DOM if inline script applied system preference
+		const isDarkClass = document.documentElement.classList.contains("dark");
+		if (isDarkClass && theme === "light") {
+			queryClient.setQueryData(["theme"], "dark");
+			router.invalidate();
+		}
+	}, [queryClient, router, theme]);
 
 	function setTheme(value: Theme) {
 		queryClient.setQueryData(["theme"], value);

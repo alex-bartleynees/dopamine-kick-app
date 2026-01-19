@@ -15,10 +15,13 @@ const THEME_COOKIE_OPTIONS = {
 };
 
 export const getThemeServerFn = createServerFn().handler(async () => {
-	const theme = (getCookie(THEME_COOKIE_KEY) || "light") as Theme;
-	// Refresh cookie expiration on read (sliding window)
-	setCookie(THEME_COOKIE_KEY, theme, THEME_COOKIE_OPTIONS);
-	return theme;
+	const existingTheme = getCookie(THEME_COOKIE_KEY) as Theme | undefined;
+	if (existingTheme) {
+		// Refresh cookie expiration on read (sliding window)
+		setCookie(THEME_COOKIE_KEY, existingTheme, THEME_COOKIE_OPTIONS);
+		return existingTheme;
+	}
+	return "light";
 });
 
 export const setThemeServerFn = createServerFn({ method: "POST" })

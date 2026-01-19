@@ -4,6 +4,7 @@ import {
 	createRootRouteWithContext,
 	HeadContent,
 	Outlet,
+	ScriptOnce,
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -95,6 +96,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en" className={theme === "dark" ? "dark" : ""}>
 			<head>
 				<HeadContent />
+				<ScriptOnce>
+					{`if (!document.cookie.includes('_preferred-theme=') &&
+						window.matchMedia('(prefers-color-scheme: dark)').matches) {
+						document.documentElement.classList.add('dark');
+					}`}
+				</ScriptOnce>
 			</head>
 			<body>
 				<ThemeProvider theme={theme}>{children}</ThemeProvider>
