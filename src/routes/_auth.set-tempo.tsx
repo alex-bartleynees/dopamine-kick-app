@@ -1,33 +1,26 @@
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bell, ChevronLeft } from "lucide-react";
-import { useState } from "react";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
+	DEFAULT_HABITS,
+	type Habit,
 	type HabitReminderForCreation,
 	type HabitSearchParams,
 	habitSearchSchema,
 } from "@/schemas/habit";
-import { bulkCreateHabitRemindersFn, getHabitsFn } from "@/server/habits";
+import {
+	bulkCreateHabitRemindersFn,
+	bulkCreateHabitsFn,
+	getHabitsFn,
+} from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/set-tempo")({
 	loader: async () => {
-		const habits = await getHabitsFn();
-		if (habits.length === 0) {
-			throw redirect({
-				to: "/choose-habits",
-				search: { selectedIds: [], customHabits: [] },
-			});
-		}
-		return { habits };
+		const existingHabits = await getHabitsFn();
+		return { existingHabits };
 	},
 	component: RouteComponent,
 	validateSearch: (search: Record<string, unknown>): HabitSearchParams => {
@@ -74,9 +67,10 @@ const REMINDER_TIME_OPTIONS = [
 ];
 
 function RouteComponent() {
-	const { habits } = Route.useLoaderData();
+	const { existingHabits } = Route.useLoaderData();
 	const search = Route.useSearch();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const { csrfToken } = useAuth();
 	const { requestPermission, subscribe, isSupported, permission } =
 		usePushNotifications();
@@ -89,18 +83,68 @@ function RouteComponent() {
 	const [hasPromptedForNotifications, setHasPromptedForNotifications] =
 		useState(false);
 
-	const createRemindersMutation = useMutation({
-		mutationFn: async (reminders: HabitReminderForCreation[]) => {
+	// Derive habits from URL params (new habits being added) or existing habits (just updating tempo)
+	const selectedHabitsFromParams = useMemo(() => {
+		const habits: Habit[] = [];
+		for (const id of search.selectedIds) {
+			const defaultHabit = DEFAULT_HABITS.find((h) => h.id === id);
+			if (defaultHabit) {
+				habits.push(defaultHabit);
+			}
+		}
+		for (const customHabit of search.customHabits) {
+			habits.push(customHabit);
+		}
+		return habits;
+	}, [search.selectedIds, search.customHabits]);
+
+	const hasNewHabitsToSave = selectedHabitsFromParams.length > 0;
+	const habits = hasNewHabitsToSave ? selectedHabitsFromParams : existingHabits;
+
+	const createHabitsAndRemindersMutation = useMutation({
+		mutationFn: async (data: {
+			habitsToCreate: Array<{ name: string; emoji: string; target: string }>;
+			preferences: Record<string, Preference>;
+			habitsList: Habit[];
+		}) => {
+			const { habitsToCreate, preferences: prefs, habitsList } = data;
+
+			// Save new habits if any
+			if (habitsToCreate.length > 0) {
+				await bulkCreateHabitsFn({
+					data: { habits: habitsToCreate, csrfToken },
+				});
+			}
+
+			// Fetch all habits to get real IDs (including newly created ones)
+			const allHabits = await getHabitsFn();
+
+			// Map preferences to real habit IDs by matching names
+			const reminders: HabitReminderForCreation[] = habitsList.map((habit) => {
+				const dbHabit = allHabits.find((h) => h.name === habit.name);
+				const pref = prefs[habit.id];
+
+				return {
+					habitId: dbHabit?.id ?? "",
+					notificationTime: pref.reminderTime,
+					timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+					preferredTime: pref.timePreference ?? "Morning",
+					isEnabled: pref.reminderEnabled,
+				};
+			});
+
+			// Create reminders
 			return await bulkCreateHabitRemindersFn({
 				data: { reminders, csrfToken },
 			});
 		},
-		onSuccess: () => {
+		onSuccess: async () => {
+			// Invalidate habits query to force refetch on dashboard
+			await queryClient.invalidateQueries({ queryKey: ["habits"] });
 			navigate({ to: "/dashboard" });
 		},
 		onError: (error) => {
-			console.error("Failed to create reminders:", error);
-			// TODO: Show error toast/message to user
+			console.error("Failed to create habits and reminders:", error);
 		},
 	});
 
@@ -148,17 +192,24 @@ function RouteComponent() {
 
 		await setupPushNotificationsIfNeeded();
 
-		// Create habit reminders
-		const habitRemindersToCreate = Object.entries(preferences).map(
-			([habitId, pref]) => ({
-				habitId,
-				notificationTime: pref.reminderTime,
-				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-				preferredTime: pref.timePreference ?? "",
-				isEnabled: pref.reminderEnabled,
-			}),
-		);
-		createRemindersMutation.mutate(habitRemindersToCreate);
+		// Determine which habits need to be created (filter out existing ones by name)
+		const existingNames = new Set(existingHabits.map((h) => h.name));
+		const habitsToCreate = hasNewHabitsToSave
+			? habits
+					.map((habit) => ({
+						name: habit.name,
+						emoji: habit.emoji,
+						target: habit.target,
+					}))
+					.filter((habit) => !existingNames.has(habit.name))
+			: [];
+
+		// Create habits and reminders
+		createHabitsAndRemindersMutation.mutate({
+			habitsToCreate,
+			preferences,
+			habitsList: habits,
+		});
 	};
 
 	const setupPushNotificationsIfNeeded = async () => {
@@ -184,6 +235,16 @@ function RouteComponent() {
 			}
 		}
 	};
+
+	// Redirect if no habits available (must be after all hooks)
+	if (habits.length === 0) {
+		navigate({
+			to: "/choose-habits",
+			search: { selectedIds: [], customHabits: [] },
+			replace: true,
+		});
+		return null;
+	}
 
 	const progressWidth = ((currentIndex + 1) / habits.length) * 100;
 
@@ -314,23 +375,32 @@ function RouteComponent() {
 									<p className="block text-sm mb-2 text-gray-700 dark:text-gray-300">
 										Reminder time
 									</p>
-									<Select
+									<input
+										type="time"
 										value={currentPreference.reminderTime}
-										onValueChange={(value) =>
-											updatePreference({ reminderTime: value })
+										onChange={(e) =>
+											updatePreference({ reminderTime: e.target.value })
 										}
-									>
-										<SelectTrigger className="w-full px-4 py-3 h-auto rounded-xl border border-gray-200 dark:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 bg-white dark:bg-gray-700 dark:text-gray-200">
-											<SelectValue placeholder="Select a time" />
-										</SelectTrigger>
-										<SelectContent>
-											{REMINDER_TIME_OPTIONS.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+										className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 bg-white dark:bg-gray-700 dark:text-gray-200 text-base"
+									/>
+									<div className="mt-3 flex flex-wrap gap-2">
+										{REMINDER_TIME_OPTIONS.map((option) => (
+											<button
+												type="button"
+												key={option.value}
+												onClick={() =>
+													updatePreference({ reminderTime: option.value })
+												}
+												className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+													currentPreference.reminderTime === option.value
+														? "bg-purple-500 text-white shadow-md"
+														: "bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500"
+												}`}
+											>
+												{option.label}
+											</button>
+										))}
+									</div>
 								</div>
 							</div>
 						</div>
@@ -340,14 +410,14 @@ function RouteComponent() {
 					<button
 						type="button"
 						onClick={handleNext}
-						disabled={!canProceed || createRemindersMutation.isPending}
+						disabled={!canProceed || createHabitsAndRemindersMutation.isPending}
 						className={`w-full mt-6 py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 opacity-0 animate-fade-in-up ${
-							canProceed && !createRemindersMutation.isPending
+							canProceed && !createHabitsAndRemindersMutation.isPending
 								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
 								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 						}`}
 					>
-						{createRemindersMutation.isPending
+						{createHabitsAndRemindersMutation.isPending
 							? "Setting up..."
 							: isLastHabit
 								? "Done"

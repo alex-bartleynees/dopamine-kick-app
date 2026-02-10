@@ -1,14 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Check, Plus } from "lucide-react";
+import { Check, ChevronLeft, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import {
 	DEFAULT_HABITS,
 	type Habit,
 	type HabitSearchParams,
 	habitSearchSchema,
 } from "@/schemas/habit";
-import { bulkCreateHabitsFn } from "@/server/habits";
+import { getHabitsFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/choose-habits")({
 	component: ChooseHabitsScreen,
@@ -19,10 +18,13 @@ export const Route = createFileRoute("/_auth/choose-habits")({
 		}
 		return { selectedIds: [], customHabits: [] };
 	},
+	loader: async () => {
+		const existingHabits = await getHabitsFn();
+		return { existingHabits };
+	},
 });
 
 export function ChooseHabitsScreen() {
-	const { csrfToken } = useAuth();
 	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const [showCustomForm, setShowCustomForm] = useState(false);
@@ -32,7 +34,7 @@ export function ChooseHabitsScreen() {
 	const [customName, setCustomName] = useState("");
 	const [customEmoji, setCustomEmoji] = useState("🎯");
 	const [customTarget, setCustomTarget] = useState("");
-	const [isSaving, setIsSaving] = useState(false);
+	const { existingHabits } = Route.useLoaderData();
 
 	// Derive selected habits from URL state
 	const selectedHabits = useMemo(() => {
@@ -49,7 +51,10 @@ export function ChooseHabitsScreen() {
 		return habits;
 	}, [search.selectedIds, search.customHabits]);
 
-	const allHabits = [...DEFAULT_HABITS, ...customHabits];
+	const allHabits = [...DEFAULT_HABITS, ...customHabits].map((habit) => {
+		const isDisabled = existingHabits.some((h) => h.name === habit.name);
+		return { ...habit, isDisabled };
+	});
 	const selectedIds = new Set(selectedHabits.map((h) => h.id));
 
 	const closeModal = useCallback(() => {
@@ -144,33 +149,34 @@ export function ChooseHabitsScreen() {
 		}
 	};
 
-	const handleContinue = async () => {
-		setIsSaving(true);
-		try {
-			const habitsToCreate = selectedHabits.map((habit) => ({
-				name: habit.name,
-				emoji: habit.emoji,
-				target: habit.target,
-			}));
-			await bulkCreateHabitsFn({ data: { habits: habitsToCreate, csrfToken } });
-			navigate({
-				to: "/set-tempo",
-				search: {
-					selectedIds: search.selectedIds,
-					customHabits: search.customHabits,
-				},
-			});
-		} catch {
-			setIsSaving(false);
-		}
+	const handleContinue = () => {
+		navigate({
+			to: "/set-tempo",
+			search: {
+				selectedIds: search.selectedIds,
+				customHabits: search.customHabits,
+			},
+		});
 	};
 
-	const canContinue = selectedIds.size >= 3;
+	const canContinue = existingHabits.length > 0 || selectedHabits.length > 0;
 
 	return (
 		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
 			<div className="max-w-4xl w-full">
 				<div className="animate-fade-in-up">
+					{/* Back Button - only show if user has existing habits */}
+					{existingHabits.length > 0 && (
+						<button
+							type="button"
+							onClick={() => navigate({ to: "/dashboard" })}
+							className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+						>
+							<ChevronLeft className="w-5 h-5" />
+							Back
+						</button>
+					)}
+
 					{/* Header */}
 					<div className="text-center mb-8">
 						<h1 className="mb-3">What habits do you want to build?</h1>
@@ -189,11 +195,12 @@ export function ChooseHabitsScreen() {
 									key={habit.id}
 									onClick={() => handleToggleHabit(habit)}
 									style={{ animationDelay: `${index * 50}ms` }}
+									disabled={habit.isDisabled}
 									className={`relative bg-white dark:bg-gray-800 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
 										isSelected
 											? "border-2 border-purple-500 shadow-lg shadow-purple-200 dark:shadow-purple-900/50"
 											: "border-2 border-gray-100 dark:border-gray-700 shadow hover:shadow-md"
-									}`}
+									} ${habit.isDisabled ? "opacity-50! cursor-not-allowed" : ""}`}
 								>
 									{isSelected && (
 										<div className="absolute -top-2 -right-2 bg-linear-to-br from-blue-500 to-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg animate-pop-in">
@@ -232,14 +239,14 @@ export function ChooseHabitsScreen() {
 					<button
 						type="button"
 						onClick={handleContinue}
-						disabled={!canContinue || isSaving}
+						disabled={!canContinue}
 						className={`w-full py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 animate-fade-in-up animation-delay-300 ${
-							canContinue && !isSaving
+							canContinue
 								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
 								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
 						}`}
 					>
-						{isSaving ? "Saving..." : `Continue (${selectedIds.size} selected)`}
+						Continue ({selectedIds.size} selected)
 					</button>
 				</div>
 			</div>

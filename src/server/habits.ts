@@ -5,8 +5,8 @@ import {
 	type Habit,
 	type HabitForCreation,
 	type HabitReminderForCreation,
-	habitSchema,
 	habitReminderForCreationSchema,
+	habitSchema,
 } from "@/schemas/habit";
 import { BACKEND_URL, getProxyHeaders } from "../lib/proxy-utils";
 
@@ -68,14 +68,15 @@ export const bulkCreateHabitsFn = createServerFn({ method: "POST" })
 	});
 
 export const setHabitCompletionFn = createServerFn({ method: "POST" })
-	.inputValidator((d: { habitId: string; csrfToken: string; timezone: string }) =>
-		z
-			.object({
-				habitId: z.string(),
-				csrfToken: z.string(),
-				timezone: z.string(),
-			})
-			.parse(d),
+	.inputValidator(
+		(d: { habitId: string; csrfToken: string; timezone: string }) =>
+			z
+				.object({
+					habitId: z.string(),
+					csrfToken: z.string(),
+					timezone: z.string(),
+				})
+				.parse(d),
 	)
 	.handler(
 		async ({
@@ -109,32 +110,36 @@ export const setHabitCompletionFn = createServerFn({ method: "POST" })
 		},
 	);
 
-type CreateHabitReminderInput = HabitReminderForCreation & { csrfToken: string };
+type CreateHabitReminderInput = HabitReminderForCreation & {
+	csrfToken: string;
+};
 
 export const createHabitReminderFn = createServerFn({ method: "POST" })
 	.inputValidator((d: CreateHabitReminderInput) =>
 		habitReminderForCreationSchema.extend({ csrfToken: z.string() }).parse(d),
 	)
-	.handler(async ({ data }: { data: CreateHabitReminderInput }): Promise<void> => {
-		const request = getRequest();
-		const { csrfToken, ...reminderData } = data;
-		const response = await fetch(
-			`${BACKEND_URL}/api/habits/${data.habitId}/reminders`,
-			{
-				method: "POST",
-				headers: {
-					...getProxyHeaders(request),
-					"Content-Type": "application/json",
-					"X-CSRF-TOKEN": csrfToken,
+	.handler(
+		async ({ data }: { data: CreateHabitReminderInput }): Promise<void> => {
+			const request = getRequest();
+			const { csrfToken, ...reminderData } = data;
+			const response = await fetch(
+				`${BACKEND_URL}/api/habits/${data.habitId}/reminders`,
+				{
+					method: "POST",
+					headers: {
+						...getProxyHeaders(request),
+						"Content-Type": "application/json",
+						"X-CSRF-TOKEN": csrfToken,
+					},
+					body: JSON.stringify(reminderData),
 				},
-				body: JSON.stringify(reminderData),
-			},
-		);
+			);
 
-		if (!response.ok) {
-			throw new Error("Failed to create habit reminder");
-		}
-	});
+			if (!response.ok) {
+				throw new Error("Failed to create habit reminder");
+			}
+		},
+	);
 
 const bulkCreateRemindersInputSchema = z.object({
 	reminders: z.array(habitReminderForCreationSchema),

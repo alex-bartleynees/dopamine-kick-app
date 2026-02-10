@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Calendar, TrendingUp } from "lucide-react";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { Calendar, Plus, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ConfettiParticle } from "@/components/dashboard";
 import {
@@ -34,13 +34,13 @@ function Dashboard() {
 	const { initialHabits, locale } = Route.useLoaderData();
 	const { user, csrfToken } = useAuth();
 	const queryClient = useQueryClient();
+	const navigate = useNavigate();
 	const { data: habits = initialHabits } = useQuery({
 		queryKey: ["habits"],
 		queryFn: async () => {
 			return await getHabitsFn();
 		},
 		initialData: initialHabits,
-		refetchOnMount: false,
 	});
 	const setHabitCompletedMutation = useMutation({
 		mutationFn: async (data: {
@@ -244,6 +244,25 @@ function Dashboard() {
 							/>
 						);
 					})}
+
+					{/* Add More Habits Button */}
+					<button
+						type="button"
+						onClick={() =>
+							navigate({
+								to: "/choose-habits",
+								search: { selectedIds: [], customHabits: [] },
+							})
+						}
+						className="w-full py-4 px-6 bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-2xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+						style={{
+							animationDelay: `${habits.length * 100}ms`,
+							opacity: mounted ? 1 : 0,
+						}}
+					>
+						<Plus className="w-5 h-5" />
+						<span className="font-medium">Add More Habits</span>
+					</button>
 				</div>
 
 				{/* Stats Cards */}
