@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { Calendar, Plus, TrendingUp } from "lucide-react";
+import { Calendar, Plus, Target, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ConfettiParticle } from "@/components/dashboard";
 import {
@@ -201,12 +201,22 @@ function Dashboard() {
 							</h1>
 							<p className="text-gray-600 dark:text-gray-300">{today}</p>
 						</div>
-						<div className="text-right">
-							<div className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-								{completedCount}/{totalHabits}
-							</div>
-							<div className="text-sm text-gray-600 dark:text-gray-400">
-								completed
+						<div className="flex items-center gap-4">
+							<button
+								type="button"
+								onClick={() => navigate({ to: "/quests" })}
+								className="flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-blue-500 to-purple-500 text-white text-sm font-medium hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+							>
+								<Target className="w-4 h-4" />
+								Quests
+							</button>
+							<div className="text-right">
+								<div className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+									{completedCount}/{totalHabits}
+								</div>
+								<div className="text-sm text-gray-600 dark:text-gray-400">
+									completed
+								</div>
 							</div>
 						</div>
 					</div>

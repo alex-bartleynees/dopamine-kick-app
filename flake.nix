@@ -6,13 +6,24 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
         # Helper to create landrun-wrapped version of a package
-        wrapWithLandrun = { pkg, binName, extraArgs ? "" }:
+        wrapWithLandrun =
+          {
+            pkg,
+            binName,
+            extraArgs ? "",
+          }:
           pkgs.writeShellScriptBin binName ''
             exec ${pkgs.landrun}/bin/landrun \
               --rox /nix/store \
@@ -27,6 +38,7 @@
         sandboxed-node = pkgs.writeShellScriptBin "node" ''
           exec ${pkgs.landrun}/bin/landrun \
             --rox /nix/store \
+            --rox ~/.local/share/nvim \
             --rwx "$PWD" \
             --ro /etc \
             --ro /run/current-system \

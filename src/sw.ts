@@ -87,18 +87,24 @@ self.addEventListener("push", (event: PushEvent) => {
 		const payload = event.data.json();
 		const { title, body, icon, badge, data } = payload;
 
+		const isQuest = !!data?.questId;
+
 		const options: NotificationOptions = {
-			body: body || "Time for your habit!",
+			body:
+				body || (isQuest ? "You have a quest due!" : "Time for your habit!"),
 			icon: icon || "/logo192.png",
 			badge: badge || "/logo192.png",
 			data: data || {},
 			vibrate: [200, 100, 200],
-			tag: data?.habitId || "habit-reminder",
+			tag: data?.questId || data?.habitId || "reminder",
 			requireInteraction: false,
 		};
 
 		event.waitUntil(
-			self.registration.showNotification(title || "Habit Reminder", options),
+			self.registration.showNotification(
+				title || (isQuest ? "Quest Reminder" : "Habit Reminder"),
+				options,
+			),
 		);
 	} catch (error) {
 		console.error("Error handling push event:", error);
