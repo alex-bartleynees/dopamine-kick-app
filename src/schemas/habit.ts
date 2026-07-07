@@ -30,23 +30,65 @@ export const habitForCreationSchema = z.object({
 	target: z.string(),
 });
 
+export const habitUpdateSchema = z.object({
+	name: z.string().min(1).max(100),
+	emoji: z.string().min(1).max(10),
+	target: z.string().min(1).max(200),
+});
+
 export const bulkHabitsForCreationSchema = z.object({
 	habits: z.array(habitForCreationSchema),
 });
 
-export const habitReminderForCreationSchema = z.object({
+// Read shape returned by GET /api/habits/{habitId}/reminders
+export const habitReminderSchema = z.object({
+	id: z.string(),
 	habitId: z.string(),
-	notificationTime: z.string(), // TimeOnly as HH:mm string
-	timezone: z.string(),
+	userId: z.string(),
+	notificationTime: z.string(), // TimeOnly as "HH:mm:ss"
+	timeZone: z.string(), // IANA id
+	preferredTime: z.string(),
+	isEnabled: z.boolean(),
+});
+
+// Body for POST /api/habits/{habitId}/reminders (habitId is a route param)
+export const habitReminderForCreationSchema = z.object({
+	notificationTime: z.string(), // TimeOnly as "HH:mm:ss"
+	timeZone: z.string(),
+	preferredTime: z.string(),
+	isEnabled: z.boolean(),
+});
+
+// Item for POST /api/habits/reminders/bulk (no per-habit route, so habitId stays)
+export const bulkHabitReminderItemSchema = z.object({
+	habitId: z.string(),
+	notificationTime: z.string(),
+	timeZone: z.string(),
+	preferredTime: z.string(),
+	isEnabled: z.boolean(),
+});
+
+// Body for PUT /api/habits/{habitId}/reminders/{reminderId}
+export const habitReminderForUpdateSchema = z.object({
+	notificationTime: z.string(),
+	timeZone: z.string(),
 	preferredTime: z.string(),
 	isEnabled: z.boolean(),
 });
 
 export type Habit = z.infer<typeof habitSchema>;
 export type HabitForCreation = z.infer<typeof habitForCreationSchema>;
+export type HabitUpdate = z.infer<typeof habitUpdateSchema>;
 export type CustomHabit = z.infer<typeof customHabitSchema>;
 export type HabitSearchParams = z.infer<typeof habitSearchSchema>;
-export type HabitReminderForCreation = z.infer<typeof habitReminderForCreationSchema>;
+export type HabitReminder = z.infer<typeof habitReminderSchema>;
+export type HabitReminderForCreation = z.infer<
+	typeof habitReminderForCreationSchema
+>;
+export type BulkHabitReminderItem = z.infer<typeof bulkHabitReminderItemSchema>;
+export type HabitReminderForUpdate = z.infer<
+	typeof habitReminderForUpdateSchema
+>;
 
 export const DEFAULT_HABITS: Habit[] = [
 	{ id: "exercise", emoji: "🏃", name: "Exercise", target: "20 min" },

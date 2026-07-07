@@ -7,9 +7,16 @@ interface HabitCardProps {
 	mounted: boolean;
 	index: number;
 	onToggle: (habitId: string) => void;
+	onOpen: (habitId: string) => void;
 }
 
-export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
+export function HabitCard({
+	habit,
+	mounted,
+	index,
+	onToggle,
+	onOpen,
+}: HabitCardProps) {
 	const completedToday = isToday(habit.lastCompletedDate);
 	const progress = {
 		completed: completedToday,
@@ -22,10 +29,7 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 			}`}
 			style={{ transitionDelay: `${index * 100}ms` }}
 		>
-			<button
-				type="button"
-				onClick={() => onToggle(habit.id)}
-				disabled={completedToday}
+			<div
 				className={`w-full bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border-2 ${
 					progress.completed
 						? "border-purple-400 dark:border-purple-500"
@@ -33,7 +37,13 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 				}`}
 			>
 				<div className="flex items-center gap-4 flex-wrap">
-					<div
+					<button
+						type="button"
+						onClick={() => !completedToday && onToggle(habit.id)}
+						disabled={completedToday}
+						aria-label={
+							completedToday ? "Habit completed" : "Mark habit complete"
+						}
 						className={`relative shrink-0 w-12 h-12 rounded-xl border-2 transition-[border-color,background-color] duration-300 ${
 							progress.completed
 								? "bg-linear-to-br from-blue-500 to-purple-500 border-purple-400"
@@ -45,13 +55,17 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 								<Check className="w-7 h-7 text-white" strokeWidth={3} />
 							</div>
 						)}
-					</div>
+					</button>
 
-					<div className="flex-1 text-left">
+					<button
+						type="button"
+						onClick={() => onOpen(habit.id)}
+						className="flex-1 text-left min-w-20"
+					>
 						<div className="flex items-center gap-2 mb-1">
 							<span className="text-2xl">{habit.emoji}</span>
 							<span
-								className={`font-medium transition-[color,text-decoration] duration-300 min-w-20 ${
+								className={`font-medium transition-[color,text-decoration] duration-300 ${
 									progress.completed
 										? "line-through text-gray-400 dark:text-gray-500"
 										: "dark:text-gray-200"
@@ -63,7 +77,7 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 						<div className="text-sm text-gray-500 dark:text-gray-400">
 							{habit.target}
 						</div>
-					</div>
+					</button>
 
 					{progress.streak > 0 && (
 						<div className="flex items-center gap-2 bg-linear-to-br from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 px-4 py-2 rounded-xl">
@@ -74,7 +88,7 @@ export function HabitCard({ habit, mounted, index, onToggle }: HabitCardProps) {
 						</div>
 					)}
 				</div>
-			</button>
+			</div>
 		</div>
 	);
 }
