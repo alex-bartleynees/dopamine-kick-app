@@ -2,15 +2,24 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import {
+	type BulkHabitReminderItem,
+	bulkHabitReminderItemSchema,
 	type Habit,
 	type HabitForCreation,
+	type HabitReminder,
 	type HabitReminderForCreation,
+	type HabitReminderForUpdate,
+	type HabitUpdate,
 	habitReminderForCreationSchema,
+	habitReminderForUpdateSchema,
+	habitReminderSchema,
 	habitSchema,
+	habitUpdateSchema,
 } from "@/schemas/habit";
 import { BACKEND_URL, getProxyHeaders } from "../lib/proxy-utils";
 
 const habitsResponseSchema = z.array(habitSchema);
+const habitRemindersResponseSchema = z.array(habitReminderSchema);
 
 const bulkCreateInputSchema = z.object({
 	habits: z.array(
@@ -43,6 +52,43 @@ export const getHabitsFn = createServerFn({ method: "GET" }).handler(
 	},
 );
 
+export const getHabitFn = createServerFn({ method: "GET" })
+	.inputValidator((habitId: string) => z.string().parse(habitId))
+	.handler(async ({ data: habitId }): Promise<Habit> => {
+		const request = getRequest();
+		const response = await fetch(`${BACKEND_URL}/api/habits/${habitId}`, {
+			method: "GET",
+			headers: getProxyHeaders(request),
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			return habitSchema.parse(data);
+		}
+
+		throw new Error("Failed to fetch habit");
+	});
+
+export const getHabitRemindersFn = createServerFn({ method: "GET" })
+	.inputValidator((habitId: string) => z.string().parse(habitId))
+	.handler(async ({ data: habitId }): Promise<HabitReminder[]> => {
+		const request = getRequest();
+		const response = await fetch(
+			`${BACKEND_URL}/api/habits/${habitId}/reminders`,
+			{
+				method: "GET",
+				headers: getProxyHeaders(request),
+			},
+		);
+
+		if (response.ok) {
+			const data = await response.json();
+			return habitRemindersResponseSchema.parse(data);
+		}
+
+		throw new Error("Failed to fetch habit reminders");
+	});
+
 type BulkCreateInput = { habits: HabitForCreation[]; csrfToken: string };
 
 export const bulkCreateHabitsFn = createServerFn({ method: "POST" })
@@ -65,6 +111,56 @@ export const bulkCreateHabitsFn = createServerFn({ method: "POST" })
 		}
 
 		throw new Error("Failed to create habits");
+	});
+
+type UpdateHabitInput = HabitUpdate & { habitId: string; csrfToken: string };
+
+export const updateHabitFn = createServerFn({ method: "POST" })
+	.inputValidator((d: UpdateHabitInput) =>
+		habitUpdateSchema
+			.extend({ habitId: z.string(), csrfToken: z.string() })
+			.parse(d),
+	)
+	.handler(async ({ data }: { data: UpdateHabitInput }): Promise<Habit> => {
+		const request = getRequest();
+		const { csrfToken, habitId, ...habitData } = data;
+		const response = await fetch(`${BACKEND_URL}/api/habits/${habitId}`, {
+			method: "PUT",
+			headers: {
+				...getProxyHeaders(request),
+				"Content-Type": "application/json",
+				"X-CSRF-TOKEN": csrfToken,
+			},
+			body: JSON.stringify(habitData),
+		});
+
+		if (response.ok) {
+			const result = await response.json();
+			return habitSchema.parse(result);
+		}
+
+		throw new Error("Failed to update habit");
+	});
+
+type DeleteHabitInput = { habitId: string; csrfToken: string };
+
+export const deleteHabitFn = createServerFn({ method: "POST" })
+	.inputValidator((d: DeleteHabitInput) =>
+		z.object({ habitId: z.string(), csrfToken: z.string() }).parse(d),
+	)
+	.handler(async ({ data }: { data: DeleteHabitInput }): Promise<void> => {
+		const request = getRequest();
+		const response = await fetch(`${BACKEND_URL}/api/habits/${data.habitId}`, {
+			method: "DELETE",
+			headers: {
+				...getProxyHeaders(request),
+				"X-CSRF-TOKEN": data.csrfToken,
+			},
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to delete habit");
+		}
 	});
 
 export const setHabitCompletionFn = createServerFn({ method: "POST" })
@@ -111,19 +207,22 @@ export const setHabitCompletionFn = createServerFn({ method: "POST" })
 	);
 
 type CreateHabitReminderInput = HabitReminderForCreation & {
+	habitId: string;
 	csrfToken: string;
 };
 
 export const createHabitReminderFn = createServerFn({ method: "POST" })
 	.inputValidator((d: CreateHabitReminderInput) =>
-		habitReminderForCreationSchema.extend({ csrfToken: z.string() }).parse(d),
+		habitReminderForCreationSchema
+			.extend({ habitId: z.string(), csrfToken: z.string() })
+			.parse(d),
 	)
 	.handler(
 		async ({ data }: { data: CreateHabitReminderInput }): Promise<void> => {
 			const request = getRequest();
-			const { csrfToken, ...reminderData } = data;
+			const { csrfToken, habitId, ...reminderData } = data;
 			const response = await fetch(
-				`${BACKEND_URL}/api/habits/${data.habitId}/reminders`,
+				`${BACKEND_URL}/api/habits/${habitId}/reminders`,
 				{
 					method: "POST",
 					headers: {
@@ -141,13 +240,88 @@ export const createHabitReminderFn = createServerFn({ method: "POST" })
 		},
 	);
 
+type UpdateHabitReminderInput = HabitReminderForUpdate & {
+	habitId: string;
+	reminderId: string;
+	csrfToken: string;
+};
+
+export const updateHabitReminderFn = createServerFn({ method: "POST" })
+	.inputValidator((d: UpdateHabitReminderInput) =>
+		habitReminderForUpdateSchema
+			.extend({
+				habitId: z.string(),
+				reminderId: z.string(),
+				csrfToken: z.string(),
+			})
+			.parse(d),
+	)
+	.handler(
+		async ({ data }: { data: UpdateHabitReminderInput }): Promise<void> => {
+			const request = getRequest();
+			const { csrfToken, habitId, reminderId, ...reminderData } = data;
+			const response = await fetch(
+				`${BACKEND_URL}/api/habits/${habitId}/reminders/${reminderId}`,
+				{
+					method: "PUT",
+					headers: {
+						...getProxyHeaders(request),
+						"Content-Type": "application/json",
+						"X-CSRF-TOKEN": csrfToken,
+					},
+					body: JSON.stringify(reminderData),
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to update habit reminder");
+			}
+		},
+	);
+
+type DeleteHabitReminderInput = {
+	habitId: string;
+	reminderId: string;
+	csrfToken: string;
+};
+
+export const deleteHabitReminderFn = createServerFn({ method: "POST" })
+	.inputValidator((d: DeleteHabitReminderInput) =>
+		z
+			.object({
+				habitId: z.string(),
+				reminderId: z.string(),
+				csrfToken: z.string(),
+			})
+			.parse(d),
+	)
+	.handler(
+		async ({ data }: { data: DeleteHabitReminderInput }): Promise<void> => {
+			const request = getRequest();
+			const response = await fetch(
+				`${BACKEND_URL}/api/habits/${data.habitId}/reminders/${data.reminderId}`,
+				{
+					method: "DELETE",
+					headers: {
+						...getProxyHeaders(request),
+						"X-CSRF-TOKEN": data.csrfToken,
+					},
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to delete habit reminder");
+			}
+		},
+	);
+
 const bulkCreateRemindersInputSchema = z.object({
-	reminders: z.array(habitReminderForCreationSchema),
+	reminders: z.array(bulkHabitReminderItemSchema),
 	csrfToken: z.string(),
 });
 
 type BulkCreateRemindersInput = {
-	reminders: HabitReminderForCreation[];
+	reminders: BulkHabitReminderItem[];
 	csrfToken: string;
 };
 
