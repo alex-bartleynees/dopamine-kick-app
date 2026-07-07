@@ -18,8 +18,11 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BffLoginRouteImport } from './routes/bff/login'
 import { Route as AuthSetTempoRouteImport } from './routes/_auth.set-tempo'
+import { Route as AuthQuestsRouteImport } from './routes/_auth.quests'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
+import { Route as AuthCreateQuestRouteImport } from './routes/_auth.create-quest'
 import { Route as AuthChooseHabitsRouteImport } from './routes/_auth.choose-habits'
+import { Route as AuthQuestQuestIdRouteImport } from './routes/_auth.quest.$questId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -65,14 +68,29 @@ const AuthSetTempoRoute = AuthSetTempoRouteImport.update({
   path: '/set-tempo',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthQuestsRoute = AuthQuestsRouteImport.update({
+  id: '/quests',
+  path: '/quests',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthCreateQuestRoute = AuthCreateQuestRouteImport.update({
+  id: '/create-quest',
+  path: '/create-quest',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthChooseHabitsRoute = AuthChooseHabitsRouteImport.update({
   id: '/choose-habits',
   path: '/choose-habits',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthQuestQuestIdRoute = AuthQuestQuestIdRouteImport.update({
+  id: '/quest/$questId',
+  path: '/quest/$questId',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -84,9 +102,12 @@ export interface FileRoutesByFullPath {
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
+  '/create-quest': typeof AuthCreateQuestRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/quests': typeof AuthQuestsRoute
   '/set-tempo': typeof AuthSetTempoRoute
   '/bff/login': typeof BffLoginRoute
+  '/quest/$questId': typeof AuthQuestQuestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -96,9 +117,12 @@ export interface FileRoutesByTo {
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
+  '/create-quest': typeof AuthCreateQuestRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/quests': typeof AuthQuestsRoute
   '/set-tempo': typeof AuthSetTempoRoute
   '/bff/login': typeof BffLoginRoute
+  '/quest/$questId': typeof AuthQuestQuestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,9 +134,12 @@ export interface FileRoutesById {
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
   '/_auth/choose-habits': typeof AuthChooseHabitsRoute
+  '/_auth/create-quest': typeof AuthCreateQuestRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/quests': typeof AuthQuestsRoute
   '/_auth/set-tempo': typeof AuthSetTempoRoute
   '/bff/login': typeof BffLoginRoute
+  '/_auth/quest/$questId': typeof AuthQuestQuestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -124,9 +151,12 @@ export interface FileRouteTypes {
     | '/signout-callback-oidc'
     | '/signup'
     | '/choose-habits'
+    | '/create-quest'
     | '/dashboard'
+    | '/quests'
     | '/set-tempo'
     | '/bff/login'
+    | '/quest/$questId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -136,9 +166,12 @@ export interface FileRouteTypes {
     | '/signout-callback-oidc'
     | '/signup'
     | '/choose-habits'
+    | '/create-quest'
     | '/dashboard'
+    | '/quests'
     | '/set-tempo'
     | '/bff/login'
+    | '/quest/$questId'
   id:
     | '__root__'
     | '/'
@@ -149,9 +182,12 @@ export interface FileRouteTypes {
     | '/signout-callback-oidc'
     | '/signup'
     | '/_auth/choose-habits'
+    | '/_auth/create-quest'
     | '/_auth/dashboard'
+    | '/_auth/quests'
     | '/_auth/set-tempo'
     | '/bff/login'
+    | '/_auth/quest/$questId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -230,11 +266,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSetTempoRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/quests': {
+      id: '/_auth/quests'
+      path: '/quests'
+      fullPath: '/quests'
+      preLoaderRoute: typeof AuthQuestsRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthDashboardRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/create-quest': {
+      id: '/_auth/create-quest'
+      path: '/create-quest'
+      fullPath: '/create-quest'
+      preLoaderRoute: typeof AuthCreateQuestRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/choose-habits': {
@@ -244,19 +294,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthChooseHabitsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/quest/$questId': {
+      id: '/_auth/quest/$questId'
+      path: '/quest/$questId'
+      fullPath: '/quest/$questId'
+      preLoaderRoute: typeof AuthQuestQuestIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
 interface AuthRouteChildren {
   AuthChooseHabitsRoute: typeof AuthChooseHabitsRoute
+  AuthCreateQuestRoute: typeof AuthCreateQuestRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthQuestsRoute: typeof AuthQuestsRoute
   AuthSetTempoRoute: typeof AuthSetTempoRoute
+  AuthQuestQuestIdRoute: typeof AuthQuestQuestIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthChooseHabitsRoute: AuthChooseHabitsRoute,
+  AuthCreateQuestRoute: AuthCreateQuestRoute,
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthQuestsRoute: AuthQuestsRoute,
   AuthSetTempoRoute: AuthSetTempoRoute,
+  AuthQuestQuestIdRoute: AuthQuestQuestIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
