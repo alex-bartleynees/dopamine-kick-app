@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { Eye, EyeOff, Flame } from "lucide-react";
 import { useState } from "react";
+import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createUserFn } from "@/server/users";
@@ -45,7 +46,7 @@ function SignUp() {
 	});
 
 	return (
-		<div className="min-h-screen flex flex-col bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 px-6 py-12">
+		<PageShell className="flex flex-col px-6 py-12">
 			{/* Logo */}
 			<div className="flex items-center justify-center gap-2 mb-12 animate-fade-in">
 				<div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
@@ -232,8 +233,9 @@ function SignUp() {
 					<div className="pt-4 animate-fade-in-up animation-delay-700">
 						<Button
 							type="submit"
-							className="w-full bg-linear-to-r from-blue-500 to-purple-500 text-white py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-							size="lg"
+							variant="gradient"
+							size="xl"
+							className="w-full"
 						>
 							Create Account
 						</Button>
@@ -253,6 +255,6 @@ function SignUp() {
 					</button>
 				</p>
 			</div>
-		</div>
+		</PageShell>
 	);
 }

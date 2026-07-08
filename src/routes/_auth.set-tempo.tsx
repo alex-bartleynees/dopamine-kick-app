@@ -1,7 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronLeft } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PageShell } from "@/components/layout/PageShell";
+import { BackButton } from "@/components/ui/back-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
@@ -50,6 +56,7 @@ function RouteComponent() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { csrfToken } = useAuth();
+	const { toast } = useToast();
 	const { requestPermission, subscribe, isSupported, permission } =
 		usePushNotifications();
 
@@ -121,8 +128,8 @@ function RouteComponent() {
 			await queryClient.invalidateQueries({ queryKey: ["habits"] });
 			navigate({ to: "/dashboard" });
 		},
-		onError: (error) => {
-			console.error("Failed to create habits and reminders:", error);
+		onError: () => {
+			toast("Couldn't save your habits. Please try again.", "error");
 		},
 	});
 
@@ -227,30 +234,30 @@ function RouteComponent() {
 	const progressWidth = ((currentIndex + 1) / habits.length) * 100;
 
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
+		<PageShell center>
 			<div className="max-w-2xl w-full">
 				<div key={animationKey} className="animate-fade-in-right">
 					{/* Back Button */}
-					<button
-						type="button"
-						onClick={handleBack}
-						className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-					>
-						<ChevronLeft className="w-5 h-5" />
-						Back
-					</button>
+					<BackButton onClick={handleBack} />
 
 					{/* Progress Indicator */}
 					<div className="mb-8">
 						<div className="flex justify-between items-center mb-3">
-							<span className="text-sm text-gray-600 dark:text-gray-400">
+							<span className="text-sm text-muted-foreground">
 								Habit {currentIndex + 1} of {habits.length}
 							</span>
 							<span className="text-sm font-medium text-purple-600 dark:text-purple-400">
 								{Math.round(progressWidth)}%
 							</span>
 						</div>
-						<div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+						<div
+							role="progressbar"
+							aria-label="Habit setup progress"
+							aria-valuenow={Math.round(progressWidth)}
+							aria-valuemin={0}
+							aria-valuemax={100}
+							className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
+						>
 							<div
 								className="h-full bg-linear-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
 								style={{ width: `${progressWidth}%` }}
@@ -259,7 +266,7 @@ function RouteComponent() {
 					</div>
 
 					{/* Main Content */}
-					<div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8">
+					<div className="bg-card rounded-3xl shadow-xl p-8">
 						{/* Habit Display */}
 						<div className="text-center mb-8">
 							<div className="text-7xl mb-4 animate-scale-in">
@@ -268,14 +275,12 @@ function RouteComponent() {
 							<h2 className="mb-2">
 								What time works best for {currentHabit?.name.toLowerCase()}?
 							</h2>
-							<p className="text-gray-600 dark:text-gray-400">
-								{currentHabit?.target}
-							</p>
+							<p className="text-muted-foreground">{currentHabit?.target}</p>
 						</div>
 
 						{/* Time Preference Buttons */}
 						<div className="mb-8">
-							<p className="block text-sm mb-3 text-gray-700 dark:text-gray-300">
+							<p className="block text-sm mb-3 text-muted-foreground">
 								Choose your preferred time
 							</p>
 							<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -305,7 +310,7 @@ function RouteComponent() {
 						</div>
 
 						{/* Reminder Toggle */}
-						<div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+						<div className="border-t border-border pt-6">
 							<div className="flex items-center justify-between mb-4">
 								<div className="flex items-center gap-3">
 									<div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-xl flex items-center justify-center">
@@ -313,32 +318,18 @@ function RouteComponent() {
 									</div>
 									<div>
 										<div className="font-medium">Remind me</div>
-										<div className="text-sm text-gray-500 dark:text-gray-400">
+										<div className="text-sm text-muted-foreground">
 											Get daily notifications
 										</div>
 									</div>
 								</div>
-								<button
-									type="button"
-									onClick={() =>
-										updatePreference({
-											reminderEnabled: !currentPreference.reminderEnabled,
-										})
+								<Switch
+									checked={currentPreference.reminderEnabled}
+									onCheckedChange={(reminderEnabled) =>
+										updatePreference({ reminderEnabled })
 									}
-									className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${
-										currentPreference.reminderEnabled
-											? "bg-linear-to-r from-blue-500 to-purple-500"
-											: "bg-gray-300 dark:bg-gray-600"
-									}`}
-								>
-									<div
-										className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${
-											currentPreference.reminderEnabled
-												? "translate-x-6.5"
-												: "translate-x-0.5"
-										}`}
-									/>
-								</button>
+									aria-label="Remind me with daily notifications"
+								/>
 							</div>
 
 							{/* Time Picker */}
@@ -350,16 +341,17 @@ function RouteComponent() {
 								}`}
 							>
 								<div className="overflow-hidden">
-									<p className="block text-sm mb-2 text-gray-700 dark:text-gray-300">
+									<p className="block text-sm mb-2 text-muted-foreground">
 										Reminder time
 									</p>
-									<input
+									<Input
 										type="time"
 										value={currentPreference.reminderTime}
 										onChange={(e) =>
 											updatePreference({ reminderTime: e.target.value })
 										}
-										className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 bg-white dark:bg-gray-700 dark:text-gray-200 text-base"
+										className="h-auto px-4 py-3 rounded-xl"
+										aria-label="Reminder time"
 									/>
 									<div className="mt-3 flex flex-wrap gap-2">
 										{REMINDER_TIME_OPTIONS.map((option) => (
@@ -385,24 +377,21 @@ function RouteComponent() {
 					</div>
 
 					{/* Next/Done Button */}
-					<button
-						type="button"
+					<Button
+						variant="gradient"
+						size="xl"
 						onClick={handleNext}
 						disabled={!canProceed || createHabitsAndRemindersMutation.isPending}
-						className={`w-full mt-6 py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 opacity-0 animate-fade-in-up ${
-							canProceed && !createHabitsAndRemindersMutation.isPending
-								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
-								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-						}`}
+						className="w-full mt-6 opacity-0 animate-fade-in-up"
 					>
 						{createHabitsAndRemindersMutation.isPending
 							? "Setting up..."
 							: isLastHabit
 								? "Done"
 								: "Next"}
-					</button>
+					</Button>
 				</div>
 			</div>
-		</div>
+		</PageShell>
 	);
 }

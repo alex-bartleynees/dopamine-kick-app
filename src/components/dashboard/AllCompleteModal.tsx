@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 
 interface AllCompleteModalProps {
 	userName: string | undefined;
@@ -6,62 +7,44 @@ interface AllCompleteModalProps {
 }
 
 export function AllCompleteModal({ userName, onClose }: AllCompleteModalProps) {
-	const dialogRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		dialogRef.current?.focus();
-	}, []);
-
 	return (
-		<div
-			role="dialog"
-			aria-modal="true"
-			className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50 animate-fade-in"
+		<Modal
+			onClose={onClose}
+			aria-label="All habits completed"
+			className="text-center overflow-hidden"
 		>
-			{/* Backdrop - click to close */}
-			<button
-				type="button"
-				className="absolute inset-0 bg-transparent cursor-default border-none"
-				onClick={onClose}
-				aria-label="Close modal"
-			/>
-			<div
-				ref={dialogRef}
-				tabIndex={-1}
-				className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center overflow-hidden animate-modal-enter"
-			>
-				<div className="absolute inset-0 bg-linear-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-pink-500/20" />
+			<div className="absolute inset-0 bg-linear-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-pink-500/20" />
 
-				<div className="relative z-10">
-					<div className="text-8xl mb-4 animate-trophy-bounce">🏆</div>
+			<div className="relative z-10">
+				<div className="text-8xl mb-4 animate-trophy-bounce">🏆</div>
 
-					<h2 className="text-2xl font-bold mb-3 bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-						Amazing Work, {userName}!
-					</h2>
+				<h2 className="text-2xl font-bold mb-3 bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+					Amazing Work, {userName}!
+				</h2>
 
-					<p className="text-gray-600 dark:text-gray-300 mb-6">
-						You've completed all your habits for today. That's the dopamine kick
-						we're talking about! 🎯
-					</p>
+				<p className="text-muted-foreground mb-6">
+					You've completed all your habits for today. That's the dopamine kick
+					we're talking about! 🎯
+				</p>
 
-					<div className="bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl p-4 mb-6">
-						<div className="text-4xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-1">
-							100%
-						</div>
-						<div className="text-sm text-gray-600 dark:text-gray-400">
-							Daily Goal Achieved
-						</div>
+				<div className="bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl p-4 mb-6">
+					<div className="text-4xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-1">
+						100%
 					</div>
-
-					<button
-						type="button"
-						onClick={onClose}
-						className="w-full bg-linear-to-r from-blue-500 to-purple-500 text-white py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
-					>
-						Keep It Up! 💪
-					</button>
+					<div className="text-sm text-muted-foreground">
+						Daily Goal Achieved
+					</div>
 				</div>
+
+				<Button
+					variant="gradient"
+					size="xl"
+					onClick={onClose}
+					className="w-full rounded-xl"
+				>
+					Keep It Up! 💪
+				</Button>
 			</div>
-		</div>
+		</Modal>
 	);
 }

@@ -11,6 +11,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { ReloadPrompt } from "@/components/ReloadPrompt";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ToastProvider } from "@/components/ui/toast";
 import { getThemeServerFn } from "@/lib/theme";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -104,7 +105,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				</ScriptOnce>
 			</head>
 			<body>
-				<ThemeProvider theme={theme}>{children}</ThemeProvider>
+				<ThemeProvider theme={theme}>
+					<ToastProvider>{children}</ToastProvider>
+				</ThemeProvider>
 				<ReloadPrompt />
 				<InstallPrompt />
 				<TanStackDevtools

@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronLeft, Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { useState } from "react";
+import { PageShell } from "@/components/layout/PageShell";
+import { BackButton } from "@/components/ui/back-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { timezone } from "@/lib/timezone";
 import type { Quest } from "@/schemas/quest";
@@ -42,12 +48,15 @@ function formatReminder(iso: string, locale: string): string {
 	});
 }
 
+const fieldClasses = "h-auto px-4 py-3 rounded-xl";
+
 function QuestDetail() {
 	const { quest: initialQuest } = Route.useLoaderData();
 	const { questId } = Route.useParams();
 	const { csrfToken } = useAuth();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const { toast } = useToast();
 
 	const { data: quest = initialQuest } = useQuery({
 		queryKey: ["quest", questId],
@@ -87,8 +96,8 @@ function QuestDetail() {
 			await refreshQuest();
 			navigate({ to: "/quests" });
 		},
-		onError: (error) => {
-			console.error("Failed to update quest:", error);
+		onError: () => {
+			toast("Couldn't save your changes. Please try again.", "error");
 		},
 	});
 
@@ -108,27 +117,20 @@ function QuestDetail() {
 			setNewReminder("");
 			await refreshQuest();
 		},
-		onError: (error) => {
-			console.error("Failed to add reminder:", error);
+		onError: () => {
+			toast("Couldn't add the reminder. Please try again.", "error");
 		},
 	});
 
 	const canSave = title.trim().length > 0 && dueAt.length > 0;
 
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
+		<PageShell center>
 			<div className="max-w-2xl w-full">
 				<div className="animate-fade-in-up">
-					<button
-						type="button"
-						onClick={() => navigate({ to: "/quests" })}
-						className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-					>
-						<ChevronLeft className="w-5 h-5" />
-						Back
-					</button>
+					<BackButton onClick={() => navigate({ to: "/quests" })} />
 
-					<div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 space-y-6">
+					<div className="bg-card rounded-3xl shadow-xl p-8 space-y-6">
 						{isCompleted && (
 							<div className="rounded-xl bg-purple-100 dark:bg-purple-900/40 px-4 py-3 text-sm text-purple-700 dark:text-purple-300">
 								This quest is completed.
@@ -139,33 +141,33 @@ function QuestDetail() {
 							<div className="w-24">
 								<label
 									htmlFor="quest-emoji"
-									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
+									className="block text-sm mb-2 text-muted-foreground"
 								>
 									Emoji
 								</label>
-								<input
+								<Input
 									id="quest-emoji"
 									type="text"
 									value={emoji}
 									onChange={(e) => setEmoji(e.target.value)}
 									maxLength={10}
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all text-center text-3xl"
+									className={`${fieldClasses} text-center text-3xl`}
 								/>
 							</div>
 							<div className="flex-1">
 								<label
 									htmlFor="quest-title"
-									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
+									className="block text-sm mb-2 text-muted-foreground"
 								>
 									Title
 								</label>
-								<input
+								<Input
 									id="quest-title"
 									type="text"
 									value={title}
 									onChange={(e) => setTitle(e.target.value)}
 									maxLength={100}
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all"
+									className={fieldClasses}
 								/>
 							</div>
 						</div>
@@ -173,38 +175,38 @@ function QuestDetail() {
 						<div>
 							<label
 								htmlFor="quest-description"
-								className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
+								className="block text-sm mb-2 text-muted-foreground"
 							>
 								Description <span className="text-gray-400">(optional)</span>
 							</label>
-							<textarea
+							<Textarea
 								id="quest-description"
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								maxLength={500}
 								rows={3}
-								className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all resize-none"
+								className={`${fieldClasses} resize-none`}
 							/>
 						</div>
 
 						<div>
 							<label
 								htmlFor="quest-due"
-								className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
+								className="block text-sm mb-2 text-muted-foreground"
 							>
 								Due date &amp; time
 							</label>
-							<input
+							<Input
 								id="quest-due"
 								type="datetime-local"
 								value={dueAt}
 								onChange={(e) => setDueAt(e.target.value)}
-								className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all text-base"
+								className={fieldClasses}
 							/>
 						</div>
 
 						{/* Reminders */}
-						<div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+						<div className="border-t border-border pt-6">
 							<div className="flex items-center gap-3 mb-4">
 								<div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-xl flex items-center justify-center">
 									<Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -219,7 +221,7 @@ function QuestDetail() {
 											key={reminder.id}
 											className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-sm"
 										>
-											<span className="dark:text-gray-200">
+											<span className="text-card-foreground">
 												{formatReminder(reminder.remindAt, locale)}
 											</span>
 											<span
@@ -235,53 +237,46 @@ function QuestDetail() {
 									))}
 								</ul>
 							) : (
-								<p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+								<p className="text-sm text-muted-foreground mb-4">
 									No reminders yet.
 								</p>
 							)}
 
 							{!isCompleted && (
 								<div className="flex items-center gap-2">
-									<input
+									<Input
 										type="datetime-local"
 										value={newReminder}
 										onChange={(e) => setNewReminder(e.target.value)}
-										className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all text-base"
+										className="flex-1 h-auto px-4 py-2.5 rounded-xl"
 									/>
-									<button
-										type="button"
+									<Button
+										variant="gradient"
 										onClick={() => addReminderMutation.mutate()}
 										disabled={!newReminder || addReminderMutation.isPending}
-										className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-											newReminder && !addReminderMutation.isPending
-												? "bg-purple-500 text-white hover:bg-purple-600"
-												: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-										}`}
+										className="shrink-0 h-auto px-4 py-2.5 rounded-xl"
 									>
 										<Plus className="w-4 h-4" />
 										Add
-									</button>
+									</Button>
 								</div>
 							)}
 						</div>
 					</div>
 
 					{!isCompleted && (
-						<button
-							type="button"
+						<Button
+							variant="gradient"
+							size="xl"
 							onClick={() => updateQuestMutation.mutate()}
 							disabled={!canSave || updateQuestMutation.isPending}
-							className={`w-full mt-6 py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 ${
-								canSave && !updateQuestMutation.isPending
-									? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
-									: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-							}`}
+							className="w-full mt-6"
 						>
 							{updateQuestMutation.isPending ? "Saving..." : "Save Changes"}
-						</button>
+						</Button>
 					)}
 				</div>
 			</div>
-		</div>
+		</PageShell>
 	);
 }

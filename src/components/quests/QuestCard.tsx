@@ -43,7 +43,7 @@ export function QuestCard({
 			style={{ transitionDelay: `${index * 100}ms` }}
 		>
 			<div
-				className={`w-full bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border-2 ${
+				className={`w-full bg-card rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border-2 ${
 					isCompleted
 						? "border-purple-400 dark:border-purple-500"
 						: isOverdue
@@ -81,7 +81,7 @@ export function QuestCard({
 								className={`font-medium transition-[color,text-decoration] duration-300 ${
 									isCompleted
 										? "line-through text-gray-400 dark:text-gray-500"
-										: "dark:text-gray-200"
+										: "text-card-foreground"
 								}`}
 							>
 								{quest.title}

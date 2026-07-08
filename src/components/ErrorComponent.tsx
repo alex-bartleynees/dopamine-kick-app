@@ -1,4 +1,5 @@
 import { Link, useRouter } from "@tanstack/react-router";
+import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 
 interface ErrorComponentProps {
@@ -11,7 +12,9 @@ export function ErrorComponent({ error, message, reset }: ErrorComponentProps) {
 	const router = useRouter();
 
 	const displayMessage =
-		message || error?.message || "An unexpected error occurred. Please try again.";
+		message ||
+		error?.message ||
+		"An unexpected error occurred. Please try again.";
 
 	const handleReset = () => {
 		if (reset) {
@@ -25,7 +28,7 @@ export function ErrorComponent({ error, message, reset }: ErrorComponentProps) {
 	};
 
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
+		<PageShell center>
 			<div className="max-w-md w-full text-center animate-fade-in-up">
 				{/* Error illustration */}
 				<div className="mb-8 relative">
@@ -38,12 +41,11 @@ export function ErrorComponent({ error, message, reset }: ErrorComponentProps) {
 
 				{/* Error headline */}
 				<h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-					Oops! Something went{" "}
-					<span className="gradient-text">wrong</span>
+					Oops! Something went <span className="gradient-text">wrong</span>
 				</h1>
 
 				{/* Error message */}
-				<p className="mb-6 text-gray-600 dark:text-gray-300 animate-fade-in-up animation-delay-500 leading-relaxed text-balance">
+				<p className="mb-6 text-muted-foreground animate-fade-in-up animation-delay-500 leading-relaxed text-balance">
 					{displayMessage}
 				</p>
 
@@ -62,16 +64,21 @@ export function ErrorComponent({ error, message, reset }: ErrorComponentProps) {
 				{/* Action buttons */}
 				<div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in-up animation-delay-700">
 					<Button
+						variant="gradient"
 						onClick={reset ? handleReset : handleGoBack}
-						className="bg-linear-to-r from-blue-500 to-purple-500 text-white py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+						className="h-auto py-3 px-6 rounded-xl"
 					>
 						{reset ? "Try Again" : "Go Back"}
 					</Button>
-					<Button variant="outline" asChild className="py-3 px-6 rounded-xl">
+					<Button
+						variant="outline"
+						asChild
+						className="h-auto py-3 px-6 rounded-xl"
+					>
 						<Link to="/">Go Home</Link>
 					</Button>
 				</div>
 			</div>
-		</div>
+		</PageShell>
 	);
 }
