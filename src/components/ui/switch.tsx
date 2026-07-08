@@ -34,7 +34,7 @@ export function Switch({
 		>
 			<span
 				className={cn(
-					"absolute top-1 bg-white rounded-full shadow transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]",
+					"absolute left-0 top-1 bg-white rounded-full shadow transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]",
 					isSmall ? "w-5 h-5" : "w-6 h-6",
 					checked
 						? isSmall
