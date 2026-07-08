@@ -5,11 +5,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ConfettiParticle } from "@/components/dashboard";
 import {
 	AllCompleteModal,
-	CelebrationToast,
 	ConfettiParticleComponent,
 	HabitCard,
 	StatsCard,
 } from "@/components/dashboard";
+import { PageShell } from "@/components/layout/PageShell";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getLocaleFn } from "@/lib/locale";
 import { getTodayDate, isToday, timezone } from "@/lib/timezone";
@@ -35,6 +37,7 @@ function Dashboard() {
 	const { user, csrfToken } = useAuth();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const { toast } = useToast();
 	const { data: habits = initialHabits } = useQuery({
 		queryKey: ["habits"],
 		queryFn: async () => {
@@ -77,25 +80,17 @@ function Dashboard() {
 			if (context?.previousHabits) {
 				queryClient.setQueryData(["habits"], context.previousHabits);
 			}
+			toast("Couldn't save your progress. Please try again.", "error");
 		},
 		onSuccess: (habit) => {
 			const streak = habit.currentStreak ?? 0;
 			if (streak > 0 && streak % 7 === 0) {
-				setCelebrationMessage(`🎉 ${streak} day streak on ${habit.name}!`);
+				toast(`🎉 ${streak} day streak on ${habit.name}!`);
 			} else if (streak === 1) {
-				setCelebrationMessage(`Great start on ${habit.name}! 🎯`);
+				toast(`Great start on ${habit.name}! 🎯`);
 			} else {
-				setCelebrationMessage(`${habit.name} completed! 🔥`);
+				toast(`${habit.name} completed! 🔥`);
 			}
-
-			if (celebrationTimeoutRef.current) {
-				clearTimeout(celebrationTimeoutRef.current);
-			}
-			setShowCelebration(true);
-			celebrationTimeoutRef.current = setTimeout(
-				() => setShowCelebration(false),
-				3000,
-			);
 
 			queryClient.setQueryData<Habit[]>(["habits"], (oldHabits) => {
 				if (!oldHabits) return oldHabits;
@@ -103,16 +98,11 @@ function Dashboard() {
 			});
 		},
 	});
-	const [showCelebration, setShowCelebration] = useState(false);
-	const [celebrationMessage, setCelebrationMessage] = useState("");
 	const [showAllCompleteModal, setShowAllCompleteModal] = useState(false);
 	const [mounted, setMounted] = useState(false);
 	const [confettiParticles, setConfettiParticles] = useState<
 		ConfettiParticle[]
 	>([]);
-	const celebrationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-		null,
-	);
 	const prevAllCompletedRef = useRef<boolean | null>(null);
 
 	const completedCount = habits.filter((h) =>
@@ -181,49 +171,46 @@ function Dashboard() {
 		}
 	}, [allCompleted]);
 
-	useEffect(() => {
-		return () => {
-			if (celebrationTimeoutRef.current) {
-				clearTimeout(celebrationTimeoutRef.current);
-			}
-		};
-	}, []);
-
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900">
+		<PageShell>
 			{/* Header */}
-			<header className="bg-white dark:bg-gray-800 shadow-sm">
+			<header className="bg-card shadow-sm">
 				<div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
 					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 						<div className="min-w-0">
-							<h1 className="mb-1 text-2xl font-bold wrap-break-word dark:text-white">
+							<h1 className="mb-1 wrap-break-word text-card-foreground">
 								Hey, {user?.currentUser.name}! 👋
 							</h1>
-							<p className="text-gray-600 dark:text-gray-300">{today}</p>
+							<p className="text-muted-foreground">{today}</p>
 						</div>
 						<div className="flex items-center justify-between gap-4 sm:justify-end">
-							<button
-								type="button"
+							<Button
+								variant="gradient"
 								onClick={() => navigate({ to: "/quests" })}
-								className="flex shrink-0 items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-blue-500 to-purple-500 text-white text-sm font-medium hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+								className="shrink-0 rounded-xl"
 							>
 								<Target className="w-4 h-4" />
 								Quests
-							</button>
+							</Button>
 							<div className="text-right shrink-0">
 								<div className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
 									{completedCount}/{totalHabits}
 								</div>
-								<div className="text-sm text-gray-600 dark:text-gray-400">
-									completed
-								</div>
+								<div className="text-sm text-muted-foreground">completed</div>
 							</div>
 						</div>
 					</div>
 
 					{/* Progress Bar */}
 					<div className="mt-6">
-						<div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+						<div
+							role="progressbar"
+							aria-label="Today's habit completion"
+							aria-valuenow={Math.round(completionPercentage)}
+							aria-valuemin={0}
+							aria-valuemax={100}
+							className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
+						>
 							<div
 								className="h-full bg-linear-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out"
 								style={{ width: mounted ? `${completionPercentage}%` : "0%" }}
@@ -262,23 +249,24 @@ function Dashboard() {
 					})}
 
 					{/* Add More Habits Button */}
-					<button
-						type="button"
+					<Button
+						variant="gradient"
+						size="xl"
 						onClick={() =>
 							navigate({
 								to: "/choose-habits",
 								search: { selectedIds: [], customHabits: [] },
 							})
 						}
-						className="w-full py-4 px-6 bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-2xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+						className="w-full"
 						style={{
 							animationDelay: `${habits.length * 100}ms`,
 							opacity: mounted ? 1 : 0,
 						}}
 					>
-						<Plus className="w-5 h-5" />
-						<span className="font-medium">Add More Habits</span>
-					</button>
+						<Plus className="size-5" />
+						Add More Habits
+					</Button>
 				</div>
 
 				{/* Stats Cards */}
@@ -306,8 +294,6 @@ function Dashboard() {
 				</div>
 			</section>
 
-			{showCelebration && <CelebrationToast message={celebrationMessage} />}
-
 			{allCompleted && confettiParticles.length > 0 && (
 				<div className="fixed inset-0 pointer-events-none z-40 overflow-hidden animate-fade-in">
 					{confettiParticles.map((particle) => (
@@ -328,6 +314,6 @@ function Dashboard() {
 					onClose={() => setShowAllCompleteModal(false)}
 				/>
 			)}
-		</div>
+		</PageShell>
 	);
 }
