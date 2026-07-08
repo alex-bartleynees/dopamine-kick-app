@@ -140,3 +140,23 @@
   animation-delay: 0.2s;
   transform: scale(0);
 }
+
+/* Respect users who prefer reduced motion: jump animations and transitions
+   to their end state instead of playing them. !important is required so the
+   universal selector beats higher-specificity utility classes. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    /* biome-ignore lint/complexity/noImportantStyles: must override utility classes */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must override utility classes */
+    animation-delay: 0ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must override utility classes */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must override utility classes */
+    transition-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must override utility classes */
+    transition-delay: 0ms !important;
+  }
+}

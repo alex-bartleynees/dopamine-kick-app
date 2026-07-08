@@ -17,7 +17,7 @@ export function StatsCard({
 }: StatsCardProps) {
 	return (
 		<div
-			className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md transition-[opacity,transform] duration-500 ${
+			className={`bg-card rounded-2xl p-6 shadow-md transition-[opacity,transform] duration-500 ${
 				mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
 			}`}
 			style={{ transitionDelay: delay }}
@@ -28,11 +28,9 @@ export function StatsCard({
 				>
 					{icon}
 				</div>
-				<div className="text-sm text-gray-600 dark:text-gray-400">{label}</div>
+				<div className="text-sm text-muted-foreground">{label}</div>
 			</div>
-			<div className="text-3xl font-bold text-gray-900 dark:text-white">
-				{value}
-			</div>
+			<div className="text-3xl font-bold text-card-foreground">{value}</div>
 		</div>
 	);
 }

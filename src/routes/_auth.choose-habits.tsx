@@ -1,6 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Check, ChevronLeft, Plus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, Plus } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { PageShell } from "@/components/layout/PageShell";
+import { BackButton } from "@/components/ui/back-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import {
 	DEFAULT_HABITS,
 	type Habit,
@@ -60,19 +65,6 @@ export function ChooseHabitsScreen() {
 	const closeModal = useCallback(() => {
 		setShowCustomForm(false);
 	}, []);
-
-	useEffect(() => {
-		const handleEscKey = (event: KeyboardEvent) => {
-			if (event.key === "Escape" && showCustomForm) {
-				closeModal();
-			}
-		};
-
-		document.addEventListener("keydown", handleEscKey);
-		return () => {
-			document.removeEventListener("keydown", handleEscKey);
-		};
-	}, [showCustomForm, closeModal]);
 
 	const handleToggleHabit = (habit: Habit) => {
 		const isCurrentlySelected = selectedIds.has(habit.id);
@@ -162,25 +154,18 @@ export function ChooseHabitsScreen() {
 	const canContinue = existingHabits.length > 0 || selectedHabits.length > 0;
 
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
+		<PageShell center>
 			<div className="max-w-4xl w-full">
 				<div className="animate-fade-in-up">
 					{/* Back Button - only show if user has existing habits */}
 					{existingHabits.length > 0 && (
-						<button
-							type="button"
-							onClick={() => navigate({ to: "/dashboard" })}
-							className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-						>
-							<ChevronLeft className="w-5 h-5" />
-							Back
-						</button>
+						<BackButton onClick={() => navigate({ to: "/dashboard" })} />
 					)}
 
 					{/* Header */}
 					<div className="text-center mb-8">
 						<h1 className="mb-3">What habits do you want to build?</h1>
-						<p className="text-gray-600 dark:text-gray-300">
+						<p className="text-muted-foreground">
 							Pick 3-5 to start. You can add more later.
 						</p>
 					</div>
@@ -196,7 +181,7 @@ export function ChooseHabitsScreen() {
 									onClick={() => handleToggleHabit(habit)}
 									style={{ animationDelay: `${index * 50}ms` }}
 									disabled={habit.isDisabled}
-									className={`relative bg-white dark:bg-gray-800 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
+									className={`relative bg-card rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 animate-scale-in ${
 										isSelected
 											? "border-2 border-purple-500 shadow-lg shadow-purple-200 dark:shadow-purple-900/50"
 											: "border-2 border-gray-100 dark:border-gray-700 shadow hover:shadow-md"
@@ -221,7 +206,7 @@ export function ChooseHabitsScreen() {
 							type="button"
 							onClick={() => setShowCustomForm(true)}
 							style={{ animationDelay: `${allHabits.length * 50}ms` }}
-							className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-400 transition-all duration-300 hover:scale-105 animate-scale-in"
+							className="bg-card rounded-2xl p-6 text-center border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-400 transition-all duration-300 hover:scale-105 animate-scale-in"
 						>
 							<div className="text-5xl mb-3">
 								<Plus className="w-12 h-12 mx-auto text-gray-400" />
@@ -236,121 +221,97 @@ export function ChooseHabitsScreen() {
 					</div>
 
 					{/* Continue Button */}
-					<button
-						type="button"
+					<Button
+						variant="gradient"
+						size="xl"
 						onClick={handleContinue}
 						disabled={!canContinue}
-						className={`w-full py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 animate-fade-in-up animation-delay-300 ${
-							canContinue
-								? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl hover:scale-105"
-								: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-						}`}
+						className="w-full animate-fade-in-up animation-delay-300"
 					>
 						Continue ({selectedIds.size} selected)
-					</button>
+					</Button>
 				</div>
 			</div>
 
 			{/* Custom Habit Modal */}
 			{showCustomForm && (
-				<div
-					role="dialog"
-					aria-modal="true"
-					aria-labelledby="custom-habit-modal-title"
-					className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50 animate-fade-in"
-				>
-					{/* Backdrop - click to close */}
-					<button
-						type="button"
-						className="absolute inset-0 bg-transparent cursor-default border-none"
-						onClick={closeModal}
-						aria-label="Close modal"
-					/>
-					<div
-						role="document"
-						className="relative bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-modal-pop"
-					>
-						<h2 id="custom-habit-modal-title" className="mb-6">
-							Create Custom Habit
-						</h2>
+				<Modal onClose={closeModal} aria-labelledby="custom-habit-modal-title">
+					<h2 id="custom-habit-modal-title" className="mb-6">
+						Create Custom Habit
+					</h2>
 
-						<div className="space-y-4">
-							<div>
-								<label
-									htmlFor="custom-habit-emoji"
-									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
-								>
-									Emoji
-								</label>
-								<input
-									id="custom-habit-emoji"
-									type="text"
-									value={customEmoji}
-									onChange={(e) => setCustomEmoji(e.target.value)}
-									maxLength={2}
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all text-center text-3xl"
-								/>
-							</div>
+					<div className="space-y-4">
+						<div>
+							<label
+								htmlFor="custom-habit-emoji"
+								className="block text-sm mb-2 text-muted-foreground"
+							>
+								Emoji
+							</label>
+							<Input
+								id="custom-habit-emoji"
+								type="text"
+								value={customEmoji}
+								onChange={(e) => setCustomEmoji(e.target.value)}
+								maxLength={2}
+								className="h-auto px-4 py-3 rounded-xl text-center text-3xl"
+							/>
+						</div>
 
-							<div>
-								<label
-									htmlFor="custom-habit-name"
-									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
-								>
-									Habit Name
-								</label>
-								<input
-									id="custom-habit-name"
-									type="text"
-									value={customName}
-									onChange={(e) => setCustomName(e.target.value)}
-									placeholder="e.g., Learn Spanish"
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all"
-								/>
-							</div>
+						<div>
+							<label
+								htmlFor="custom-habit-name"
+								className="block text-sm mb-2 text-muted-foreground"
+							>
+								Habit Name
+							</label>
+							<Input
+								id="custom-habit-name"
+								type="text"
+								value={customName}
+								onChange={(e) => setCustomName(e.target.value)}
+								placeholder="e.g., Learn Spanish"
+								className="h-auto px-4 py-3 rounded-xl"
+							/>
+						</div>
 
-							<div>
-								<label
-									htmlFor="custom-habit-target"
-									className="block text-sm mb-2 text-gray-700 dark:text-gray-300"
-								>
-									Target
-								</label>
-								<input
-									id="custom-habit-target"
-									type="text"
-									value={customTarget}
-									onChange={(e) => setCustomTarget(e.target.value)}
-									placeholder="e.g., 15 min"
-									className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all"
-								/>
-							</div>
+						<div>
+							<label
+								htmlFor="custom-habit-target"
+								className="block text-sm mb-2 text-muted-foreground"
+							>
+								Target
+							</label>
+							<Input
+								id="custom-habit-target"
+								type="text"
+								value={customTarget}
+								onChange={(e) => setCustomTarget(e.target.value)}
+								placeholder="e.g., 15 min"
+								className="h-auto px-4 py-3 rounded-xl"
+							/>
+						</div>
 
-							<div className="flex gap-3 pt-4">
-								<button
-									type="button"
-									onClick={closeModal}
-									className="flex-1 py-3 px-6 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-								>
-									Cancel
-								</button>
-								<button
-									type="button"
-									onClick={handleAddCustomHabit}
-									disabled={!customName || !customTarget}
-									className={`flex-1 py-3 px-6 rounded-xl transition-all ${
-										customName && customTarget
-											? "bg-linear-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg"
-											: "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-									}`}
-								>
-									Add Habit
-								</button>
-							</div>
+						<div className="flex gap-3 pt-4">
+							<Button
+								variant="outline"
+								onClick={closeModal}
+								className="flex-1 h-auto py-3 px-6 rounded-xl"
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="gradient"
+								onClick={handleAddCustomHabit}
+								disabled={!customName || !customTarget}
+								className="flex-1 h-auto py-3 px-6 rounded-xl"
+							>
+								Add Habit
+							</Button>
 						</div>
 					</div>
-				</div>
+				</Modal>
 			)}
-		</div>
+		</PageShell>
 	);
 }

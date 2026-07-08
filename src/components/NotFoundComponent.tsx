@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
+import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 
 export function NotFoundComponent() {
 	return (
-		<div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 flex items-center justify-center p-6">
+		<PageShell center>
 			<div className="max-w-md w-full text-center animate-fade-in-up">
 				{/* 404 illustration */}
 				<div className="mb-8 relative">
@@ -20,15 +21,19 @@ export function NotFoundComponent() {
 				</h1>
 
 				{/* Message */}
-				<p className="mb-8 text-gray-600 dark:text-gray-300 animate-fade-in-up animation-delay-500 leading-relaxed text-balance">
+				<p className="mb-8 text-muted-foreground animate-fade-in-up animation-delay-500 leading-relaxed text-balance">
 					The page you're looking for doesn't exist or has been moved.
 				</p>
 
 				{/* Action button */}
-				<Button asChild className="bg-linear-to-r from-blue-500 to-purple-500 text-white py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fade-in-up animation-delay-700">
+				<Button
+					asChild
+					variant="gradient"
+					className="h-auto py-3 px-6 rounded-xl animate-fade-in-up animation-delay-700"
+				>
 					<Link to="/">Go Home</Link>
 				</Button>
 			</div>
-		</div>
+		</PageShell>
 	);
 }
