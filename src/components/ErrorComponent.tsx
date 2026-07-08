@@ -51,8 +51,8 @@ export function ErrorComponent({ error, message, reset }: ErrorComponentProps) {
 
 				{/* Error details (collapsible in dev) */}
 				{process.env.NODE_ENV === "development" && error?.stack && (
-					<details className="mb-6 text-left bg-gray-100 dark:bg-gray-800 rounded-xl p-4 text-sm animate-fade-in-up animation-delay-600">
-						<summary className="cursor-pointer font-medium text-gray-700 dark:text-gray-300">
+					<details className="mb-6 text-left bg-muted rounded-xl p-4 text-sm animate-fade-in-up animation-delay-600">
+						<summary className="cursor-pointer font-medium text-muted-foreground">
 							Error Details
 						</summary>
 						<pre className="mt-2 overflow-auto text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap">
