@@ -2,10 +2,15 @@ import { Check, Flame } from "lucide-react";
 import { getTodayDate, isToday } from "@/lib/timezone";
 import type { Habit } from "@/schemas/habit";
 
+/** How many days of history the card shows and the dashboard fetches. */
+export const HABIT_HISTORY_DAYS = 7;
+
 interface HabitCardProps {
 	habit: Habit;
 	mounted: boolean;
 	index: number;
+	/** Completion dates (YYYY-MM-DD) from the history API; undefined falls back to streak-derived dots. */
+	completedDates?: string[];
 	onToggle: (habitId: string) => void;
 	onOpen: (habitId: string) => void;
 }
@@ -43,15 +48,24 @@ function isInStreak(
 	return diffDays >= 0 && diffDays < streak;
 }
 
-function WeekDots({ habit }: { habit: Habit }) {
-	const days = getRecentDays(7);
+function WeekDots({
+	habit,
+	completedDates,
+}: {
+	habit: Habit;
+	completedDates?: string[];
+}) {
+	const days = getRecentDays(HABIT_HISTORY_DAYS);
 	const streak = habit.currentStreak ?? 0;
+	const completedSet = completedDates ? new Set(completedDates) : null;
 
 	return (
 		<div className="flex items-center gap-1.5 mt-4" aria-hidden="true">
 			{days.map((day) => {
-				const completed = isInStreak(day, habit.lastCompletedDate, streak);
 				const dayKey = formatDate(day);
+				const completed = completedSet
+					? completedSet.has(dayKey)
+					: isInStreak(day, habit.lastCompletedDate, streak);
 				const today = isToday(dayKey);
 				return (
 					<span
@@ -66,7 +80,7 @@ function WeekDots({ habit }: { habit: Habit }) {
 				);
 			})}
 			<span className="ml-1.5 text-xs text-gray-400 dark:text-gray-500">
-				7 days
+				{HABIT_HISTORY_DAYS} days
 			</span>
 		</div>
 	);
@@ -76,6 +90,7 @@ export function HabitCard({
 	habit,
 	mounted,
 	index,
+	completedDates,
 	onToggle,
 	onOpen,
 }: HabitCardProps) {
@@ -154,7 +169,7 @@ export function HabitCard({
 					)}
 				</div>
 
-				<WeekDots habit={habit} />
+				<WeekDots habit={habit} completedDates={completedDates} />
 			</div>
 		</div>
 	);
