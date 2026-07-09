@@ -8,8 +8,10 @@ import {
 	type HabitForCreation,
 	type HabitReminder,
 	type HabitReminderForCreation,
+	type HabitCompletions,
 	type HabitReminderForUpdate,
 	type HabitUpdate,
+	habitCompletionsSchema,
 	habitReminderForCreationSchema,
 	habitReminderForUpdateSchema,
 	habitReminderSchema,
@@ -51,6 +53,41 @@ export const getHabitsFn = createServerFn({ method: "GET" }).handler(
 		return [];
 	},
 );
+
+const habitCompletionsInputSchema = z.object({
+	days: z.number().int().min(1).max(90),
+	timezone: z.string(),
+});
+
+// Returns null on failure so callers can fall back to streak-derived history.
+export const getHabitCompletionsFn = createServerFn({ method: "GET" })
+	.inputValidator((d: { days: number; timezone: string }) =>
+		habitCompletionsInputSchema.parse(d),
+	)
+	.handler(async ({ data }): Promise<HabitCompletions | null> => {
+		const request = getRequest();
+		const params = new URLSearchParams({
+			days: String(data.days),
+			timezone: data.timezone,
+		});
+		try {
+			const response = await fetch(
+				`${BACKEND_URL}/api/habits/completions?${params}`,
+				{
+					method: "GET",
+					headers: getProxyHeaders(request),
+				},
+			);
+			if (response.ok) {
+				const result = await response.json();
+				return habitCompletionsSchema.parse(result);
+			}
+		} catch {
+			return null;
+		}
+
+		return null;
+	});
 
 export const getHabitFn = createServerFn({ method: "GET" })
 	.inputValidator((habitId: string) => z.string().parse(habitId))

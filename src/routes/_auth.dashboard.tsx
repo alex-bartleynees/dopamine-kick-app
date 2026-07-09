@@ -6,6 +6,7 @@ import type { ConfettiParticle } from "@/components/dashboard";
 import {
 	AllCompleteModal,
 	ConfettiParticleComponent,
+	HABIT_HISTORY_DAYS,
 	HabitCard,
 	StatsCard,
 } from "@/components/dashboard";
@@ -15,25 +16,35 @@ import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getLocaleFn } from "@/lib/locale";
 import { getTodayDate, isToday, timezone } from "@/lib/timezone";
-import type { Habit } from "@/schemas/habit";
-import { getHabitsFn, setHabitCompletionFn } from "@/server/habits";
+import type { Habit, HabitCompletions } from "@/schemas/habit";
+import {
+	getHabitCompletionsFn,
+	getHabitsFn,
+	setHabitCompletionFn,
+} from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/dashboard")({
 	loader: async () => {
-		const [habits, locale] = await Promise.all([getHabitsFn(), getLocaleFn()]);
+		const [habits, locale, completions] = await Promise.all([
+			getHabitsFn(),
+			getLocaleFn(),
+			getHabitCompletionsFn({
+				data: { days: HABIT_HISTORY_DAYS, timezone },
+			}),
+		]);
 		if (habits.length === 0) {
 			throw redirect({
 				to: "/choose-habits",
 				search: { selectedIds: [], customHabits: [] },
 			});
 		}
-		return { initialHabits: habits, locale };
+		return { initialHabits: habits, locale, initialCompletions: completions };
 	},
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const { initialHabits, locale } = Route.useLoaderData();
+	const { initialHabits, locale, initialCompletions } = Route.useLoaderData();
 	const { user, csrfToken } = useAuth();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
@@ -45,6 +56,15 @@ function Dashboard() {
 		},
 		initialData: initialHabits,
 	});
+	const { data: completionsData } = useQuery({
+		queryKey: ["habit-completions"],
+		queryFn: async () => {
+			return await getHabitCompletionsFn({
+				data: { days: HABIT_HISTORY_DAYS, timezone },
+			});
+		},
+		initialData: initialCompletions,
+	});
 	const setHabitCompletedMutation = useMutation({
 		mutationFn: async (data: {
 			habitId: string;
@@ -55,7 +75,13 @@ function Dashboard() {
 		},
 		onMutate: async ({ habitId }) => {
 			await queryClient.cancelQueries({ queryKey: ["habits"] });
+			await queryClient.cancelQueries({ queryKey: ["habit-completions"] });
 			const previousHabits = queryClient.getQueryData<Habit[]>(["habits"]);
+			const previousCompletions =
+				queryClient.getQueryData<HabitCompletions | null>([
+					"habit-completions",
+				]);
+			const today = getTodayDate();
 			queryClient.setQueryData<Habit[]>(["habits"], (oldHabits) => {
 				if (!oldHabits) return oldHabits;
 				return oldHabits.map((habit) => {
@@ -68,17 +94,35 @@ function Dashboard() {
 								habit.longestStreak ?? 0,
 								newCurrentStreak,
 							),
-							lastCompletedDate: getTodayDate(),
+							lastCompletedDate: today,
 						};
 					}
 					return habit;
 				});
 			});
-			return { previousHabits };
+			queryClient.setQueryData<HabitCompletions | null>(
+				["habit-completions"],
+				(old) => {
+					if (!old) return old;
+					const dates = old.completions[habitId] ?? [];
+					if (dates.includes(today)) return old;
+					return {
+						...old,
+						completions: { ...old.completions, [habitId]: [...dates, today] },
+					};
+				},
+			);
+			return { previousHabits, previousCompletions };
 		},
 		onError: (_err, _variables, context) => {
 			if (context?.previousHabits) {
 				queryClient.setQueryData(["habits"], context.previousHabits);
+			}
+			if (context?.previousCompletions !== undefined) {
+				queryClient.setQueryData(
+					["habit-completions"],
+					context.previousCompletions,
+				);
 			}
 			toast("Couldn't save your progress. Please try again.", "error");
 		},
@@ -231,6 +275,7 @@ function Dashboard() {
 								habit={habit}
 								mounted={mounted}
 								index={index}
+								completedDates={completionsData?.completions[habit.id]}
 								onToggle={(habitId: string) => {
 									setHabitCompletedMutation.mutate({
 										habitId,

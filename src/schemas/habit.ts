@@ -40,6 +40,13 @@ export const bulkHabitsForCreationSchema = z.object({
 	habits: z.array(habitForCreationSchema),
 });
 
+// Read shape returned by GET /api/habits/completions (bulk history)
+export const habitCompletionsSchema = z.object({
+	from: z.string(),
+	to: z.string(),
+	completions: z.record(z.string(), z.array(z.string())),
+});
+
 // Read shape returned by GET /api/habits/{habitId}/reminders
 export const habitReminderSchema = z.object({
 	id: z.string(),
@@ -77,6 +84,7 @@ export const habitReminderForUpdateSchema = z.object({
 });
 
 export type Habit = z.infer<typeof habitSchema>;
+export type HabitCompletions = z.infer<typeof habitCompletionsSchema>;
 export type HabitForCreation = z.infer<typeof habitForCreationSchema>;
 export type HabitUpdate = z.infer<typeof habitUpdateSchema>;
 export type CustomHabit = z.infer<typeof customHabitSchema>;
