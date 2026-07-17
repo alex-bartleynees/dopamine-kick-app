@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SignoutCallbackOidcRouteImport } from './routes/signout-callback-oidc'
 import { Route as SigninOidcRouteImport } from './routes/signin-oidc'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ErrorRouteImport } from './routes/error'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as SplatRouteImport } from './routes/$'
@@ -38,6 +39,11 @@ const SignoutCallbackOidcRoute = SignoutCallbackOidcRouteImport.update({
 const SigninOidcRoute = SigninOidcRouteImport.update({
   id: '/signin-oidc',
   path: '/signin-oidc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ErrorRoute = ErrorRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/error': typeof ErrorRoute
+  '/login': typeof LoginRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/error': typeof ErrorRoute
+  '/login': typeof LoginRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/_auth': typeof AuthRouteWithChildren
   '/error': typeof ErrorRoute
+  '/login': typeof LoginRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/error'
+    | '/login'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/error'
+    | '/login'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/_auth'
     | '/error'
+    | '/login'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
@@ -207,6 +219,7 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   AuthRoute: typeof AuthRouteWithChildren
   ErrorRoute: typeof ErrorRoute
+  LoginRoute: typeof LoginRoute
   SigninOidcRoute: typeof SigninOidcRoute
   SignoutCallbackOidcRoute: typeof SignoutCallbackOidcRoute
   SignupRoute: typeof SignupRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/signin-oidc'
       fullPath: '/signin-oidc'
       preLoaderRoute: typeof SigninOidcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/error': {
@@ -350,6 +370,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   AuthRoute: AuthRouteWithChildren,
   ErrorRoute: ErrorRoute,
+  LoginRoute: LoginRoute,
   SigninOidcRoute: SigninOidcRoute,
   SignoutCallbackOidcRoute: SignoutCallbackOidcRoute,
   SignupRoute: SignupRoute,

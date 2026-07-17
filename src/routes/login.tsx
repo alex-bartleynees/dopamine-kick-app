@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { LandingScreen } from "@/components/landing";
 
-export const Route = createFileRoute("/")({
-	component: App,
+export const Route = createFileRoute("/login")({
+	component: Login,
 	beforeLoad: async ({ context }) => {
 		if (
 			context?.userState?.isAuthenticated &&
@@ -13,6 +13,6 @@ export const Route = createFileRoute("/")({
 	},
 });
 
-function App() {
-	return <LandingScreen mode="get-started" />;
+function Login() {
+	return <LandingScreen mode="login" />;
 }
