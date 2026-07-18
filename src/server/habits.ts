@@ -1,14 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { runSuggestHabits } from "@/lib/ai/suggest-habits";
 import {
+	type AiSuggestedHabit,
 	type BulkHabitReminderItem,
 	bulkHabitReminderItemSchema,
 	type Habit,
+	type HabitCompletions,
 	type HabitForCreation,
 	type HabitReminder,
 	type HabitReminderForCreation,
-	type HabitCompletions,
 	type HabitReminderForUpdate,
 	type HabitUpdate,
 	habitCompletionsSchema,
@@ -53,6 +55,23 @@ export const getHabitsFn = createServerFn({ method: "GET" }).handler(
 		return [];
 	},
 );
+
+const suggestHabitsInputSchema = z.object({
+	goal: z.string().min(3).max(500),
+	existingNames: z.array(z.string()).default([]),
+});
+
+export const suggestHabitsFn = createServerFn({ method: "POST" })
+	.inputValidator((d: { goal: string; existingNames?: string[] }) =>
+		suggestHabitsInputSchema.parse(d),
+	)
+	.handler(async ({ data }): Promise<AiSuggestedHabit[]> => {
+		try {
+			return await runSuggestHabits(data.goal, data.existingNames);
+		} catch {
+			throw new Error("Failed to generate habit suggestions");
+		}
+	});
 
 const habitCompletionsInputSchema = z.object({
 	days: z.number().int().min(1).max(90),

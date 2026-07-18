@@ -40,6 +40,20 @@ export const bulkHabitsForCreationSchema = z.object({
 	habits: z.array(habitForCreationSchema),
 });
 
+// AI-generated habit suggestion. Reuses the { emoji, name, target } creation
+// shape and adds a one-line rationale. Passed directly to generateObject, so the
+// model output is schema-validated.
+export const aiSuggestedHabitSchema = z.object({
+	emoji: z.string().min(1).max(8),
+	name: z.string().min(1).max(60),
+	target: z.string().min(1).max(60), // e.g. "20 min", "8 glasses"
+	rationale: z.string().max(160), // one line: why it fits the goal
+});
+
+export const aiHabitSuggestionsSchema = z.object({
+	suggestions: z.array(aiSuggestedHabitSchema).min(3).max(5),
+});
+
 // Read shape returned by GET /api/habits/completions (bulk history)
 export const habitCompletionsSchema = z.object({
 	from: z.string(),
@@ -84,6 +98,7 @@ export const habitReminderForUpdateSchema = z.object({
 });
 
 export type Habit = z.infer<typeof habitSchema>;
+export type AiSuggestedHabit = z.infer<typeof aiSuggestedHabitSchema>;
 export type HabitCompletions = z.infer<typeof habitCompletionsSchema>;
 export type HabitForCreation = z.infer<typeof habitForCreationSchema>;
 export type HabitUpdate = z.infer<typeof habitUpdateSchema>;
