@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { Calendar, Plus, Target, TrendingUp } from "lucide-react";
+import { Calendar, CreditCard, Plus, Target, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ConfettiParticle } from "@/components/dashboard";
 import {
@@ -235,6 +235,15 @@ function Dashboard() {
 							>
 								<Target className="w-4 h-4" />
 								Quests
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => navigate({ to: "/account" })}
+								className="shrink-0 rounded-xl"
+								aria-label="Membership & billing"
+							>
+								<CreditCard className="w-5 h-5" />
 							</Button>
 							<div className="text-right shrink-0">
 								<div className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">

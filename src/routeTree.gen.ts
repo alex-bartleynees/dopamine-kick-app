@@ -9,11 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuccessRouteImport } from './routes/success'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SignoutCallbackOidcRouteImport } from './routes/signout-callback-oidc'
 import { Route as SigninOidcRouteImport } from './routes/signin-oidc'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ErrorRouteImport } from './routes/error'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,9 +26,15 @@ import { Route as AuthQuestsRouteImport } from './routes/_auth.quests'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthCreateQuestRouteImport } from './routes/_auth.create-quest'
 import { Route as AuthChooseHabitsRouteImport } from './routes/_auth.choose-habits'
+import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing.webhook'
 import { Route as AuthQuestQuestIdRouteImport } from './routes/_auth.quest.$questId'
 import { Route as AuthHabitHabitIdRouteImport } from './routes/_auth.habit.$habitId'
 
+const SuccessRoute = SuccessRouteImport.update({
+  id: '/success',
+  path: '/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -41,6 +50,11 @@ const SigninOidcRoute = SigninOidcRouteImport.update({
   path: '/signin-oidc',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -49,6 +63,11 @@ const LoginRoute = LoginRouteImport.update({
 const ErrorRoute = ErrorRouteImport.update({
   id: '/error',
   path: '/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -95,6 +114,11 @@ const AuthChooseHabitsRoute = AuthChooseHabitsRouteImport.update({
   path: '/choose-habits',
   getParentRoute: () => AuthRoute,
 } as any)
+const ApiBillingWebhookRoute = ApiBillingWebhookRouteImport.update({
+  id: '/api/billing/webhook',
+  path: '/api/billing/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthQuestQuestIdRoute = AuthQuestQuestIdRouteImport.update({
   id: '/quest/$questId',
   path: '/quest/$questId',
@@ -109,11 +133,14 @@ const AuthHabitHabitIdRoute = AuthHabitHabitIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/account': typeof AccountRoute
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
+  '/success': typeof SuccessRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
   '/create-quest': typeof AuthCreateQuestRoute
   '/dashboard': typeof AuthDashboardRoute
@@ -122,15 +149,19 @@ export interface FileRoutesByFullPath {
   '/bff/login': typeof BffLoginRoute
   '/habit/$habitId': typeof AuthHabitHabitIdRoute
   '/quest/$questId': typeof AuthQuestQuestIdRoute
+  '/api/billing/webhook': typeof ApiBillingWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/account': typeof AccountRoute
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
+  '/success': typeof SuccessRoute
   '/choose-habits': typeof AuthChooseHabitsRoute
   '/create-quest': typeof AuthCreateQuestRoute
   '/dashboard': typeof AuthDashboardRoute
@@ -139,17 +170,21 @@ export interface FileRoutesByTo {
   '/bff/login': typeof BffLoginRoute
   '/habit/$habitId': typeof AuthHabitHabitIdRoute
   '/quest/$questId': typeof AuthQuestQuestIdRoute
+  '/api/billing/webhook': typeof ApiBillingWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/account': typeof AccountRoute
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/signin-oidc': typeof SigninOidcRoute
   '/signout-callback-oidc': typeof SignoutCallbackOidcRoute
   '/signup': typeof SignupRoute
+  '/success': typeof SuccessRoute
   '/_auth/choose-habits': typeof AuthChooseHabitsRoute
   '/_auth/create-quest': typeof AuthCreateQuestRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
@@ -158,17 +193,21 @@ export interface FileRoutesById {
   '/bff/login': typeof BffLoginRoute
   '/_auth/habit/$habitId': typeof AuthHabitHabitIdRoute
   '/_auth/quest/$questId': typeof AuthQuestQuestIdRoute
+  '/api/billing/webhook': typeof ApiBillingWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/$'
+    | '/account'
     | '/error'
     | '/login'
+    | '/pricing'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
+    | '/success'
     | '/choose-habits'
     | '/create-quest'
     | '/dashboard'
@@ -177,15 +216,19 @@ export interface FileRouteTypes {
     | '/bff/login'
     | '/habit/$habitId'
     | '/quest/$questId'
+    | '/api/billing/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
+    | '/account'
     | '/error'
     | '/login'
+    | '/pricing'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
+    | '/success'
     | '/choose-habits'
     | '/create-quest'
     | '/dashboard'
@@ -194,16 +237,20 @@ export interface FileRouteTypes {
     | '/bff/login'
     | '/habit/$habitId'
     | '/quest/$questId'
+    | '/api/billing/webhook'
   id:
     | '__root__'
     | '/'
     | '/$'
     | '/_auth'
+    | '/account'
     | '/error'
     | '/login'
+    | '/pricing'
     | '/signin-oidc'
     | '/signout-callback-oidc'
     | '/signup'
+    | '/success'
     | '/_auth/choose-habits'
     | '/_auth/create-quest'
     | '/_auth/dashboard'
@@ -212,22 +259,34 @@ export interface FileRouteTypes {
     | '/bff/login'
     | '/_auth/habit/$habitId'
     | '/_auth/quest/$questId'
+    | '/api/billing/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   AuthRoute: typeof AuthRouteWithChildren
+  AccountRoute: typeof AccountRoute
   ErrorRoute: typeof ErrorRoute
   LoginRoute: typeof LoginRoute
+  PricingRoute: typeof PricingRoute
   SigninOidcRoute: typeof SigninOidcRoute
   SignoutCallbackOidcRoute: typeof SignoutCallbackOidcRoute
   SignupRoute: typeof SignupRoute
+  SuccessRoute: typeof SuccessRoute
   BffLoginRoute: typeof BffLoginRoute
+  ApiBillingWebhookRoute: typeof ApiBillingWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/success': {
+      id: '/success'
+      path: '/success'
+      fullPath: '/success'
+      preLoaderRoute: typeof SuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -249,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninOidcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -261,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/error'
       fullPath: '/error'
       preLoaderRoute: typeof ErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -326,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthChooseHabitsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/api/billing/webhook': {
+      id: '/api/billing/webhook'
+      path: '/api/billing/webhook'
+      fullPath: '/api/billing/webhook'
+      preLoaderRoute: typeof ApiBillingWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth/quest/$questId': {
       id: '/_auth/quest/$questId'
       path: '/quest/$questId'
@@ -369,12 +449,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   AuthRoute: AuthRouteWithChildren,
+  AccountRoute: AccountRoute,
   ErrorRoute: ErrorRoute,
   LoginRoute: LoginRoute,
+  PricingRoute: PricingRoute,
   SigninOidcRoute: SigninOidcRoute,
   SignoutCallbackOidcRoute: SignoutCallbackOidcRoute,
   SignupRoute: SignupRoute,
+  SuccessRoute: SuccessRoute,
   BffLoginRoute: BffLoginRoute,
+  ApiBillingWebhookRoute: ApiBillingWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
