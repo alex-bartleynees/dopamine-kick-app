@@ -1,6 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Clock, PartyPopper } from "lucide-react";
+import { useEffect, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -22,9 +23,6 @@ export const Route = createFileRoute("/success")({
 		}
 	},
 	loader: async ({ context }) => {
-		// Authoritative re-sync from Stripe before we read state — closes the race
-		// where the browser returns before Stripe's webhook does.
-		await syncSubscriptionFn({ data: { csrfToken: context.csrfToken ?? "" } });
 		const subscription = await getSubscriptionFn();
 		// Seed the cache the `_auth` gate reads, so navigating into the app after
 		// a successful checkout doesn't bounce back to pricing.
@@ -35,10 +33,42 @@ export const Route = createFileRoute("/success")({
 });
 
 function Success() {
-	const { status } = Route.useLoaderData();
+	const { status: loadedStatus } = Route.useLoaderData();
 	const { csrfToken } = useAuth();
 	const navigate = useNavigate();
 	const { toast } = useToast();
+	const queryClient = useQueryClient();
+	const [status, setStatus] = useState(loadedStatus);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: should only run once on mount, not on every status change
+	useEffect(() => {
+		let cancelled = false;
+
+		// Authoritative re-sync from Stripe, closing the race where the browser
+		// returns before Stripe's webhook does. Runs client-side (not in the route
+		// loader) because the antiforgery cookie the BFF needs may have only just
+		// been minted on this very page load's response — a server-rendered POST
+		// in the same pass would race it. Firing from an effect guarantees the
+		// browser has already round-tripped and stored that cookie first.
+		(async () => {
+			try {
+				await syncSubscriptionFn({ data: { csrfToken } });
+				const subscription = await getSubscriptionFn();
+				if (cancelled) {
+					return;
+				}
+				queryClient.setQueryData(["subscription"], subscription);
+				setStatus(subscription.status);
+			} catch {
+				// Leave the pre-sync status in place; the portal/back-to-pricing
+				// actions below still give the user a way forward.
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	const portalMutation = useMutation({
 		mutationFn: async () => openBillingPortalFn({ data: { csrfToken } }),
