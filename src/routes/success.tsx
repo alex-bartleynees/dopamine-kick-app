@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { Clock, PartyPopper } from "lucide-react";
+import { Clock, Loader2, PartyPopper } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ function Success() {
 	const { toast } = useToast();
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState(loadedStatus);
+	const [isSyncing, setIsSyncing] = useState(true);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: should only run once on mount, not on every status change
 	useEffect(() => {
@@ -62,6 +63,10 @@ function Success() {
 			} catch {
 				// Leave the pre-sync status in place; the portal/back-to-pricing
 				// actions below still give the user a way forward.
+			} finally {
+				if (!cancelled) {
+					setIsSyncing(false);
+				}
 			}
 		})();
 
@@ -83,6 +88,25 @@ function Success() {
 			toast("Couldn't open the billing portal. Please try again.", "error");
 		},
 	});
+
+	// Don't flash "Almost there" while the authoritative Stripe re-sync above
+	// is still in flight — the pre-sync loader status is frequently stale
+	// (webhook hasn't landed yet) and flips to active a moment later.
+	if (isSyncing && !hasSubscriptionAccess(status)) {
+		return (
+			<PageShell center className="px-6 py-12">
+				<div className="max-w-md w-full text-center animate-fade-in-up">
+					<div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-linear-to-br from-blue-400 to-purple-400 flex items-center justify-center shadow-2xl animate-scale-in">
+						<Loader2 className="w-10 h-10 text-white animate-spin" />
+					</div>
+					<h1 className="text-2xl font-bold mb-3">Confirming your payment</h1>
+					<p className="text-muted-foreground text-balance">
+						Just a moment while we finish setting things up.
+					</p>
+				</div>
+			</PageShell>
+		);
+	}
 
 	if (hasSubscriptionAccess(status)) {
 		return (
