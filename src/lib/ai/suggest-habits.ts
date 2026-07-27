@@ -17,7 +17,7 @@ import {
 	aiHabitSuggestionsSchema,
 } from "@/schemas/habit";
 
-const MODEL = "anthropic/claude-haiku-4.5";
+const MODEL = "deepseek/deepseek-v4-flash";
 
 export class MissingApiKeyError extends Data.TaggedError("MissingApiKeyError")<{
 	readonly message: string;
