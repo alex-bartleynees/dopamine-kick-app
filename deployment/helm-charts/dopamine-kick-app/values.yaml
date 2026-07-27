@@ -113,3 +113,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# API key
+openrouter:
+  secretName: "dopamine-kick-ai-secret"
+  apiKey: "AI_API_KEY"

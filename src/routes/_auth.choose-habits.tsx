@@ -1,18 +1,22 @@
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Check, Plus } from "lucide-react";
+import { Check, Loader2, Plus, Sparkles } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/toast";
 import {
+	type AiSuggestedHabit,
 	DEFAULT_HABITS,
 	type Habit,
 	type HabitSearchParams,
 	habitSearchSchema,
 } from "@/schemas/habit";
-import { getHabitsFn } from "@/server/habits";
+import { getHabitsFn, suggestHabitsFn } from "@/server/habits";
 
 export const Route = createFileRoute("/_auth/choose-habits")({
 	component: ChooseHabitsScreen,
@@ -39,7 +43,10 @@ export function ChooseHabitsScreen() {
 	const [customName, setCustomName] = useState("");
 	const [customEmoji, setCustomEmoji] = useState("🎯");
 	const [customTarget, setCustomTarget] = useState("");
+	const [goal, setGoal] = useState("");
+	const [suggestions, setSuggestions] = useState<AiSuggestedHabit[]>([]);
 	const { existingHabits } = Route.useLoaderData();
+	const { toast } = useToast();
 
 	// Derive selected habits from URL state
 	const selectedHabits = useMemo(() => {
@@ -141,6 +148,66 @@ export function ChooseHabitsScreen() {
 		}
 	};
 
+	const suggestMutation = useMutation({
+		mutationFn: async (input: { goal: string; existingNames: string[] }) =>
+			await suggestHabitsFn({ data: input }),
+		onSuccess: (result) => {
+			const taken = new Set(
+				[...existingHabits, ...customHabits].map((h) => h.name.toLowerCase()),
+			);
+			const fresh = result.filter((s) => !taken.has(s.name.toLowerCase()));
+			setSuggestions(fresh);
+			if (fresh.length === 0) {
+				toast(
+					"Those suggestions are already on your list. Try a different goal.",
+					"error",
+				);
+			}
+		},
+		onError: () => {
+			toast("Couldn't generate suggestions. Please try again.", "error");
+		},
+	});
+
+	const handleSuggest = () => {
+		const trimmed = goal.trim();
+		if (trimmed.length < 3) return;
+		suggestMutation.mutate({
+			goal: trimmed,
+			existingNames: existingHabits.map((h) => h.name),
+		});
+	};
+
+	const handleAcceptSuggestion = (suggestion: AiSuggestedHabit) => {
+		const newHabit: Habit = {
+			id: `ai-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+			emoji: suggestion.emoji,
+			name: suggestion.name,
+			target: suggestion.target,
+			isCustom: true,
+		};
+		setCustomHabits((prev) => [...prev, newHabit]);
+		// Adding to the URL's customHabits both renders the card in the grid and
+		// selects it (selectedHabits derives from search.customHabits).
+		navigate({
+			search: (prev) => ({
+				...prev,
+				customHabits: [
+					...prev.customHabits,
+					{
+						id: newHabit.id,
+						emoji: newHabit.emoji,
+						name: newHabit.name,
+						target: newHabit.target,
+						isCustom: true as const,
+					},
+				],
+			}),
+			replace: true,
+		});
+		setSuggestions((prev) => prev.filter((s) => s.name !== suggestion.name));
+	};
+
 	const handleContinue = () => {
 		navigate({
 			to: "/set-tempo",
@@ -168,6 +235,75 @@ export function ChooseHabitsScreen() {
 						<p className="text-muted-foreground">
 							Pick 3-5 to start. You can add more later.
 						</p>
+					</div>
+
+					{/* AI Suggestions (optional) */}
+					<div className="bg-card rounded-2xl p-6 mb-6 border-2 border-gray-100 dark:border-gray-700 shadow animate-fade-in-up">
+						<div className="flex items-center gap-2 mb-2">
+							<Sparkles className="w-5 h-5 text-purple-500" />
+							<h2 className="text-lg font-semibold">
+								Not sure where to start?
+							</h2>
+						</div>
+						<p className="text-sm text-muted-foreground mb-4">
+							Tell us what you want to achieve and we'll suggest habits that
+							fit.
+						</p>
+						<Textarea
+							value={goal}
+							onChange={(e) => setGoal(e.target.value)}
+							placeholder="e.g. I want to sleep better and feel less anxious"
+							rows={3}
+							maxLength={500}
+							className="mb-3 rounded-xl"
+						/>
+						<Button
+							variant="gradient"
+							onClick={handleSuggest}
+							disabled={goal.trim().length < 3 || suggestMutation.isPending}
+							className="w-full sm:w-auto"
+						>
+							{suggestMutation.isPending ? (
+								<>
+									<Loader2 className="w-4 h-4 animate-spin" />
+									Thinking…
+								</>
+							) : (
+								<>
+									<Sparkles className="w-4 h-4" />
+									Suggest habits
+								</>
+							)}
+						</Button>
+
+						{suggestions.length > 0 && (
+							<div className="mt-5">
+								<p className="text-sm text-muted-foreground mb-3">
+									Tap a suggestion to add it to your list:
+								</p>
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+									{suggestions.map((suggestion) => (
+										<button
+											type="button"
+											key={suggestion.name}
+											onClick={() => handleAcceptSuggestion(suggestion)}
+											className="text-left bg-background rounded-xl p-4 border-2 border-gray-100 dark:border-gray-700 hover:border-purple-400 transition-all duration-200 hover:scale-[1.02] animate-scale-in"
+										>
+											<div className="flex items-center gap-2 mb-1">
+												<span className="text-2xl">{suggestion.emoji}</span>
+												<span className="font-medium">{suggestion.name}</span>
+											</div>
+											<div className="text-xs text-purple-600 dark:text-purple-400 mb-1">
+												{suggestion.target}
+											</div>
+											<div className="text-xs text-muted-foreground">
+												{suggestion.rationale}
+											</div>
+										</button>
+									))}
+								</div>
+							</div>
+						)}
 					</div>
 
 					{/* Habit Grid */}
